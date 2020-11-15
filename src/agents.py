@@ -1,7 +1,8 @@
 from entities import *
 
 class Agent(EnvironmentElement):
-    pass
+    def __str__(self):
+        return ' R '
 
 class ProactiveAgent(Agent):
     pass
