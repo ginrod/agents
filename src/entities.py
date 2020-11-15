@@ -47,20 +47,20 @@ class EnvironmentElement:
 
 class Void(EnvironmentElement):
     def __str__(self):
-        return '     '
+        return '   '
 
 class Obstacle(EnvironmentElement):
     def __str__(self):
-        return '  O  '
+        return ' O '
 
 class Dirt(EnvironmentElement):
     def __str__(self):
-        return '  D  '
+        return ' D '
 
 class Playpen(EnvironmentElement):
     def __str__(self):
-        return '  P  '
+        return ' P '
 
 class Child(EnvironmentElement):
     def __str__(self):
-        return self.num < 10 and f' C0{self.num} ' or f' C{self.num} '
+        return self.num < 10 and f'C0{self.num}' or f'C{self.num}'
