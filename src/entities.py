@@ -41,18 +41,26 @@ class EnvironmentElement:
         self.x = x
         self.y = y
         self.environment = environment
+    
+    def __repr__(self):
+        return str(self)
 
 class Void(EnvironmentElement):
-    pass
+    def __str__(self):
+        return '     '
 
 class Obstacle(EnvironmentElement):
-    pass
+    def __str__(self):
+        return '  O  '
 
 class Dirt(EnvironmentElement):
-    pass
+    def __str__(self):
+        return '  D  '
 
 class Playpen(EnvironmentElement):
-    pass
+    def __str__(self):
+        return '  P  '
 
 class Child(EnvironmentElement):
-    pass
+    def __str__(self):
+        return self.num < 10 and f' C0{self.num} ' or f' C{self.num} '
