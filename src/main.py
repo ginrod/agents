@@ -13,8 +13,9 @@ def pretty_print_env(env):
     
     return result
 
-def register_msg(msg, file):
-    print(msg, end="")
+def register_msg(msg, file, only_file=False):
+    if not only_file:
+        print(msg, end="")
     file.write(msg)
 
 def create_initial_environment(agent):
@@ -223,11 +224,11 @@ def run_simulation(env, file, t=50):
         t0 += 1
     
     if t0 == t:
-        register_msg(f'La simulación terminó porque se alcanzó el tiempo {t}\n\n', file)
+        register_msg(f'La simulación terminó porque se alcanzó el tiempo {100 * t}\n\n', file)
     elif dirty_cells >= 0.6 * total_cells:
         register_msg(f'La simulación terminó porque la casa estaba sucia. El robot fue despedido\n\n', file)
     else:
-        register_msg(f'La simulación terminó porque el robot logró poner a lso niños en el corral y limpiar la casa\n\n', file)
+        register_msg(f'La simulación terminó porque el robot logró poner a los niños en el corral y limpiar la casa\n\n', file)
 
 if __name__ == '__main__':
     import argparse
