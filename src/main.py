@@ -77,10 +77,8 @@ def create_initial_environment(agent):
             shortest_path_without_obstacles = build_path((robotX, robotY), (x, y), pi_no_obstacles)
             for x, y in shortest_path_without_obstacles[1:len(shortest_path_without_obstacles)-1]:
                 env[x][y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
-                if (x,y) in free_cells: free_cells.remove((x,y))
 
     # Generating dirt
-    count = min(dirt_count, len(free_cells))
     for _ in range(dirt_count):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
