@@ -32,38 +32,33 @@ def create_initial_environment(agent):
     obstacles_count = math.floor(random.randint(10, 20) / 100 * total_cells)
     available_cells_count -= obstacles_count
 
-    # Generate children between the 10 and 20 % of available cells
+    # Generate children count between the 10 and 20 % of available cells
     children_count = math.floor(random.randint(10, 20) / 100 * available_cells_count)
     play_pen_cells_count = children_count
 
-    # Generate play pen dimensions
-    possible_dimensions = []
-    for row_dimension in range(1, rows):
-        col_dimension = play_pen_cells_count // row_dimension
-        if 0 < col_dimension and col_dimension < cols: 
-            possible_dimensions.append((row_dimension, col_dimension))
+    # Generating void cells
+    for x in range(rows):
+        for y in range(cols):
+            if env[x][y] == None:
+                env[x][y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
 
-    idx = random.randint(0, len(possible_dimensions) - 1)
-    play_pen_rows, play_pen_cols = possible_dimensions[idx]
 
-    # Generate play pen dimensions left corner
-    play_pen_x = random.randint(0, play_pen_rows - 1)
-    play_pen_y = random.randint(0, play_pen_cols - 1)
-   
+    # Generate play pen cells
+    playpen_cells = find_playpen_cells(env, play_pen_cells_count - 1)
+
     # Generating play pen cells
     free_cells = [(x, y) for y in range(cols) for x in range(rows)]
-    for x in range(play_pen_x, play_pen_rows):
-        for y in range(play_pen_y, play_pen_cols):
-            env[x][y] = (Void(x, y, env), Playpen(x, y, env), Void(x, y, env))
-            free_cells.remove((x, y))
-    
-    # Generating dirt
-    for _ in range(dirt_count):
-        idx = random.randint(0, len(free_cells) - 1)
-        x, y = free_cells[idx]
-        env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+    for x, y in playpen_cells:
+        env[x][y] = (Void(x, y, env), Playpen(x, y, env), Void(x, y, env))
         free_cells.remove((x, y))
     
+    # Generating robot
+    idx = random.randint(0, len(free_cells) - 1)
+    robotX, robotY = free_cells[idx]
+    env[x][y] = (Void(x, y, env), agent(x, y, env), Void(x, y, env))
+
+    pi_no_obstacles, _ = find_paths(env, (robotX, robotY), obstacles=None)
+
     # Generating obstacles
     for _ in range(obstacles_count):
         idx = random.randint(0, len(free_cells) - 1)
@@ -71,6 +66,34 @@ def create_initial_environment(agent):
         env[x][y] = (Void(x, y, env), Obstacle(x, y, env), Void(x, y, env))
         free_cells.remove((x, y))
     
+    x = 1
+    for y in range(cols):
+        env[x][y] = (Void(x, y, env), Obstacle(x, y, env), Void(x, y, env))
+    
+    x, y = 2, 0
+    env[x][y] = (Void(x, y, env), agent(x, y, env), Void(x, y, env))
+    robotX, robotY = 2, 0
+
+    walk_obstacles = ((Void, Obstacle, Void),)
+    pi, _ = find_paths(env, (robotX, robotY), obstacles=walk_obstacles)
+    free_cells = [pos for pos in free_cells if pos in pi]
+
+    # Check that all playpen cells are achievable
+    for x, y in playpen_cells:
+        if (x, y) not in pi:
+            shortest_path_without_obstacles = build_path((robotX, robotY), (x, y), pi_no_obstacles)
+            for x, y in shortest_path_without_obstacles[1:len(shortest_path_without_obstacles)-1]:
+                env[x][y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+                if (x,y) in free_cells: free_cells.remove((x,y))
+
+    # Generating dirt
+    count = min(dirt_count, len(free_cells))
+    for _ in range(dirt_count):
+        idx = random.randint(0, len(free_cells) - 1)
+        x, y = free_cells[idx]
+        env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+        free_cells.remove((x, y))
+
     # Generating children
     for child_num in range(children_count):
         idx = random.randint(0, len(free_cells) - 1)
@@ -79,19 +102,84 @@ def create_initial_environment(agent):
         child.num = child_num
         env[x][y] = (Void(x, y, env), child, Void(x, y, env))
         free_cells.remove((x, y))
-    
-    # Generating robot
-    idx = random.randint(0, len(free_cells) - 1)
-    x, y = free_cells[idx]
-    env[x][y] = (Void(x, y, env), agent(x, y, env), Void(x, y, env))
-
-    # Generating void cells
-    for x in range(rows):
-        for y in range(cols):
-            if env[x][y] == None:
-                env[x][y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
 
     return env
+
+def inside(env, x, y):
+    rows, cols = len(env), len(env[0])
+    return 0 <= x < rows and 0 <= y < cols
+
+def build_path(start, end, pi):
+    if not end in pi: return []
+
+    path, curr = [], end
+    while curr != start:
+        path.append(curr)
+        curr = pi[curr]
+    path.append(start)
+    path.reverse()
+
+    return path
+
+def random_walk(env, visited, pi, start_pos, curr_pos, length):
+    dirs = list(directions)
+    x, y = curr_pos
+    curr_len = visited[x][y]
+
+    while curr_len < length and len(dirs) > 0:
+        dx, dy = dirs[random.randint(0, len(dirs) - 1)]
+        nx, ny = x + dx, y + dy
+
+        if inside(env, nx, ny) and (nx, ny) != start_pos and visited[nx][ny] == 0: 
+            pi[nx, ny] = (x, y)
+            visited[nx][ny] = visited[x][y] + 1
+            rx, ry = random_walk(env, visited, pi, start_pos, (nx, ny), length)
+            if visited[rx][ry] == length:
+                return (rx, ry)
+        
+        dirs.remove((dx, dy))
+
+    return curr_pos
+
+def find_playpen_cells(env, length):
+    rows, cols = len(env), len(env[0])
+    visited, pi = [[0 for _ in range(cols)] for _ in range(rows)], {}
+    start_pos = random.randint(0, rows - 1), random.randint(0, cols - 1)
+    end_pos = random_walk(env, visited, pi, start_pos, start_pos, length)
+
+    play_pen_cells = build_path(start_pos, end_pos, pi)
+
+    return play_pen_cells
+    
+def find_paths(env, s, obstacles):
+    def match_obstacles(curr_cell):
+        if not obstacles: 
+            return False
+
+        c1, c2, c3 = curr_cell
+        for t1, t2, t3 in obstacles:
+            if isinstance(c1, t1) and isinstance(c2, t2) and isinstance(c3, t3):
+                return True
+        
+        return False
+
+    rows, cols = len(env), len(env[0])
+    visited = [[0 for _ in range(cols)] for _ in range(rows)]
+    q, pi = [s], {}
+
+    while len(q) > 0:
+        x, y  = q.pop()
+
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            next_pos = (nx, ny)
+            if inside(env, nx, ny) and next_pos != s and visited[nx][ny] == 0 and \
+                not match_obstacles(env[nx][ny], obstacles):
+                q.insert(0, next_pos)
+                pi[next_pos] = (x, y)
+                visited[nx][ny] = visited[x][y] + 1
+    
+    return pi, visited
 
 def count_dirty_cells(env):
     count = 0
