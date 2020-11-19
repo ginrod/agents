@@ -97,7 +97,8 @@ def create_initial_environment(agent):
     return env
 
 def run_simulation(env, file, t=50):
-    register_msg(f'\n{pretty_print_env(env)}\n', file, only_file=True)
+    register_msg(f'\n\n#Turno 0', file, only_file=True)
+    register_msg(f'{pretty_print_env(env)}\n\n', file, only_file=True)
     rows, cols = len(env), len(env[0])
 
     t0 = 1
@@ -110,6 +111,8 @@ def run_simulation(env, file, t=50):
 
         if children_in_play_pen(env) == len(children) and dirty_cells == 0:
             break
+
+        register_msg(f'#Turno {t0}', file, only_file=True)
         
         # Performe a robot turn
         # Performe an environment change
@@ -120,7 +123,7 @@ def run_simulation(env, file, t=50):
         if t0 % t == 0:
             pass
 
-        register_msg(f'\n{pretty_print_env(env)}\n', file, only_file=True)
+        register_msg(f'{pretty_print_env(env)}\n\n', file, only_file=True)
 
         dirty_cells = count_dirty_cells(env)
         t0 += 1
@@ -148,7 +151,7 @@ if __name__ == '__main__':
     for r_num, agent in enumerate(agents):
         environments = [create_initial_environment(agent) for _ in range(10)]
         for e_num, environment in enumerate(environments):
-            for _ in range(30):
+            for _ in range(1):
                 register_msg(f"#Simulacion {sim_num}\n", file)
                 register_msg(f"#Robot de tipo {r_num}\n", file)
                 register_msg(f"#Ambiente {e_num + 1}", file)
