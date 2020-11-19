@@ -1,4 +1,3 @@
-from entities import *
 from agents import *
 from environment import *
 import random, math
@@ -100,7 +99,7 @@ def create_initial_environment(agent):
     return env
 
 def run_simulation(env, file, t=50):
-    register_msg(f'\n{pretty_print_env(env)}\n', file)
+    register_msg(f'\n{pretty_print_env(env)}\n', file, only_file=True)
     rows, cols = len(env), len(env[0])
 
     t0 = 1
@@ -127,11 +126,11 @@ def run_simulation(env, file, t=50):
         t0 += 1
     
     if t0 == t:
-        register_msg(f'La simulación terminó porque se alcanzó el tiempo {100 * t}\n\n', file)
+        register_msg(f'\nLa simulación terminó porque se alcanzó el tiempo {100 * t}\n\n', file)
     elif dirty_cells >= 0.6 * (void_cells + dirty_cells):
-        register_msg(f'La simulación terminó porque la casa estaba sucia. El robot fue despedido\n\n', file)
+        register_msg(f'\nLa simulación terminó porque la casa estaba sucia. El robot fue despedido\n\n', file)
     else:
-        register_msg(f'La simulación terminó porque el robot logró poner a los niños en el corral y limpiar la casa\n\n', file)
+        register_msg(f'\nLa simulación terminó porque el robot logró poner a los niños en el corral y limpiar la casa\n\n', file)
 
 if __name__ == '__main__':
     import argparse
