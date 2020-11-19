@@ -2,7 +2,7 @@ class Direction:
 
     @staticmethod
     def north():
-        return 1, 0
+        return -1, 0
     
     @staticmethod
     def north_east():
