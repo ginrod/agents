@@ -62,9 +62,10 @@ class Obstacle(EnvironmentElement):
     def _move(self, new_pos):
         nx, ny = new_pos
         # Move to new_pos position
-        env[self.x][self.y] = Void(self.x, self.y, self.env)
-        env[nx][ny] = self
+        x, y, env = self.x, self.y, self.env
+        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
         self.x, self.y = nx, ny
+        self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
 
     def push(self, direction):
         dx, dy = direction
@@ -72,14 +73,14 @@ class Obstacle(EnvironmentElement):
 
         if not inside(self.env, nx, ny): return
         
-        if isinstance(self.env[nx][ny], Void):
+        if isinstance(self.env[nx][ny][1], Void):
             self._move((nx, ny))
-        elif isinstance(self.env[nx][ny], Obstacle):
+        elif isinstance(self.env[nx][ny][1], Obstacle):
             # Try pushing the obstacle
-            self.env[nx][ny].push((dx, dy))
+            self.env[nx][ny][1].push((dx, dy))
 
             # If new pos is now Void the push could be performed
-            if isinstance(self.env[nx][ny], Void):
+            if isinstance(self.env[nx][ny][1], Void):
                 self._move((nx, ny))
 
 class Dirt(EnvironmentElement):
@@ -97,9 +98,10 @@ class Child(EnvironmentElement):
     def _move(self, new_pos):
         nx, ny = new_pos
         # Move to new_pos position
-        env[self.x][self.y] = Void(self.x, self.y, self.env)
-        env[nx][ny] = self
+        x, y, env = self.x, self.y, self.env
+        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
         self.x, self.y = nx, ny
+        self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
 
     def react(self):
         inside_directions = [(dx,dy) for dx,dy in directions if inside(self.env, self.x + dx, self.y + dy)]
@@ -110,12 +112,12 @@ class Child(EnvironmentElement):
         dx, dy = inside_directions[idx]
         nx, ny = self.x + dx, self.y + dy
 
-        if isinstance(self.env[nx][ny], Void):
+        if isinstance(self.env[nx][ny][1], Void):
             self._move((nx, ny))
-        elif isinstance(self.env[nx][ny], Obstacle):
+        elif isinstance(self.env[nx][ny][1], Obstacle):
             # Try pushing the obstacle
-            self.env[nx][ny].push((dx, dy))
+            self.env[nx][ny][1].push((dx, dy))
             
             # If new pos is now Void the push could be performed
-            if isinstance(self.env[nx][ny], Void):
+            if isinstance(self.env[nx][ny][1], Void):
                 self._move((nx, ny))
