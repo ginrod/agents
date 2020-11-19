@@ -122,10 +122,12 @@ def run_simulation(env, file, t=50):
         if t0 % t == 0:
             pass
 
+        register_msg(f'\n{pretty_print_env(env)}\n', file, only_file=True)
+
         dirty_cells = count_dirty_cells(env)
         t0 += 1
     
-    if t0 == t:
+    if t0 == 100 * t + 1:
         register_msg(f'\nLa simulación terminó porque se alcanzó el tiempo {100 * t}\n\n', file)
     elif dirty_cells >= 0.6 * (void_cells + dirty_cells):
         register_msg(f'\nLa simulación terminó porque la casa estaba sucia. El robot fue despedido\n\n', file)

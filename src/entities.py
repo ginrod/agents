@@ -58,6 +58,29 @@ class Void(EnvironmentElement):
 class Obstacle(EnvironmentElement):
     def __str__(self):
         return ' O '
+    
+    def _move(self, new_pos):
+        nx, ny = new_pos
+        # Move to new_pos position
+        env[self.x][self.y] = Void(self.x, self.y, self.env)
+        env[nx][ny] = self
+        self.x, self.y = nx, ny
+
+    def push(self, direction):
+        dx, dy = direction
+        nx, ny = self.x + dx, self.y + dy
+
+        if not inside(self.env, nx, ny): return
+        
+        if isinstance(self.env[nx][ny], Void):
+            self._move((nx, ny))
+        elif isinstance(self.env[nx][ny], Obstacle):
+            # Try pushing the obstacle
+            self.env[nx][ny].push((dx, dy))
+
+            # If new pos is now Void the push could be performed
+            if isinstance(self.env[nx][ny], Void):
+                self._move((nx, ny))
 
 class Dirt(EnvironmentElement):
     def __str__(self):
