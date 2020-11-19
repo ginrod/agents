@@ -140,8 +140,13 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-t', '--time', type=int, default=50)
+    # parser.add_argument('-i', '--iter', type=int, default=30)
+    parser.add_argument('-i', '--iter', type=int, default=1)
+    # parser.add_argument('-p', '--print-to-file', type=bool, default=False)
+    parser.add_argument('-p', '--print-to-file', type=bool, default=True)
+
     args = parser.parse_args()
-    t = args.time
+    t, iterations, print_to_file = args.time, args.iter, args.print_to_file
 
     with open('sim_logs.txt', 'w', encoding='utf-8'): pass
     file = open('sim_logs.txt', 'a', encoding='utf-8')
