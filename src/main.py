@@ -199,7 +199,7 @@ def count_children(env):
     
     return count
 
-def run_simulation(env, file, t=100):
+def run_simulation(env, file, t=50):
     register_msg(f'\n{pretty_print_env(env)}\n', file)
     total_cells = len(env) * len(env[0])
 
@@ -209,7 +209,7 @@ def run_simulation(env, file, t=100):
 
     # Performe a robot turn
 
-    while t0 < t:
+    while t0 < 100 * t:
         if dirty_cells >= 0.6 * total_cells:
             break
 
@@ -230,6 +230,13 @@ def run_simulation(env, file, t=100):
         register_msg(f'La simulación terminó porque el robot logró poner a lso niños en el corral y limpiar la casa\n\n', file)
 
 if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-t', '--time', type=int, default=50)
+    args = parser.parse_args()
+    t = args.time
+
     with open('sim_logs.txt', 'w', encoding='utf-8'): pass
     file = open('sim_logs.txt', 'a', encoding='utf-8')
     
@@ -242,7 +249,7 @@ if __name__ == '__main__':
                 register_msg(f"#Simulacion {sim_num}\n", file)
                 register_msg(f"#Robot de tipo {r_num}\n", file)
                 register_msg(f"#Ambiente {e_num + 1}", file)
-                run_simulation(environment, file)
+                run_simulation(environment, file, t)
                 sim_num += 1
     
     file.close()
