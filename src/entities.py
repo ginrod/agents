@@ -1,8 +1,10 @@
+import random
+
 class Direction:
 
     @staticmethod
     def north():
-        return 1, 0
+        return -1, 0
     
     @staticmethod
     def north_east():
@@ -35,12 +37,16 @@ class Direction:
 directions = [Direction.north(), Direction.north_east(), Direction.east(), Direction.south_east(), 
               Direction.south(), Direction.south_west(), Direction.west(), Direction.north_west()]
 
+def inside(env, x, y):
+    rows, cols = len(env), len(env[0])
+    return 0 <= x < rows and 0 <= y < cols
+
 class EnvironmentElement:
 
-    def __init__(self, x, y, environment):
+    def __init__(self, x, y, env):
         self.x = x
         self.y = y
-        self.environment = environment
+        self.env = env
     
     def __repr__(self):
         return str(self)
@@ -52,6 +58,30 @@ class Void(EnvironmentElement):
 class Obstacle(EnvironmentElement):
     def __str__(self):
         return ' O '
+    
+    def _move(self, new_pos):
+        nx, ny = new_pos
+        # Move to new_pos position
+        x, y, env = self.x, self.y, self.env
+        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+        self.x, self.y = nx, ny
+        self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
+
+    def push(self, direction):
+        dx, dy = direction
+        nx, ny = self.x + dx, self.y + dy
+
+        if not inside(self.env, nx, ny): return
+        
+        if isinstance(self.env[nx][ny][1], Void):
+            self._move((nx, ny))
+        elif isinstance(self.env[nx][ny][1], Obstacle):
+            # Try pushing the obstacle
+            self.env[nx][ny][1].push((dx, dy))
+
+            # If new pos is now Void the push could be performed
+            if isinstance(self.env[nx][ny][1], Void):
+                self._move((nx, ny))
 
 class Dirt(EnvironmentElement):
     def __str__(self):
@@ -64,3 +94,30 @@ class Playpen(EnvironmentElement):
 class Child(EnvironmentElement):
     def __str__(self):
         return self.num < 10 and f'C0{self.num}' or f'C{self.num}'
+    
+    def _move(self, new_pos):
+        nx, ny = new_pos
+        # Move to new_pos position
+        x, y, env = self.x, self.y, self.env
+        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+        self.x, self.y = nx, ny
+        self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
+
+    def react(self):
+        inside_directions = [(dx,dy) for dx,dy in directions if inside(self.env, self.x + dx, self.y + dy)]
+        idx = random.randint(0, len(inside_directions))
+        # Simulating a do nothing with the same probability of move randomly inside env
+        if idx == len(inside_directions): return
+
+        dx, dy = inside_directions[idx]
+        nx, ny = self.x + dx, self.y + dy
+
+        if isinstance(self.env[nx][ny][1], Void):
+            self._move((nx, ny))
+        elif isinstance(self.env[nx][ny][1], Obstacle):
+            # Try pushing the obstacle
+            self.env[nx][ny][1].push((dx, dy))
+            
+            # If new pos is now Void the push could be performed
+            if isinstance(self.env[nx][ny][1], Void):
+                self._move((nx, ny))
