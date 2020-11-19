@@ -182,6 +182,15 @@ def count_dirty_cells(env):
     
     return count
 
+def count_void_cells(env):
+    count = 0
+    for line in env:
+        for _, cell_center, _ in line:
+            if isinstance(cell_center, Void):
+                count += 1
+    
+    return count
+
 def children_in_play_pen(env):
     count = 0
     for line in env:
@@ -191,8 +200,8 @@ def children_in_play_pen(env):
     
     return count
 
-def count_children(env):
-    count = 0
+def get_children(env):
+    children = 
     for line in env:
         for _, child_in_pos1, child_in_pos2 in line:
             if isinstance(child_in_pos1, Child) or isinstance(child_in_pos2, Child):
@@ -200,25 +209,26 @@ def count_children(env):
     
     return count
 
+
 def run_simulation(env, file, t=50):
     register_msg(f'\n{pretty_print_env(env)}\n', file)
-    total_cells = len(env) * len(env[0])
+    rows, cols = len(env), len(env[0])
 
     t0 = 1
-    dirty_cells = count_dirty_cells(env)
-    children_count = count_children(env)
-
-    # Performe a robot turn
+    dirty_cells, void_cells = count_dirty_cells(env), count_void_cells(env)
+    children = get_children(env)
 
     while t0 <= 100 * t:
-        if dirty_cells >= 0.6 * total_cells:
+        if dirty_cells >= 0.6 * (void_cells + dirty_cells):
             break
 
-        if children_in_play_pen(env) == children_count and dirty_cells == 0:
+        if children_in_play_pen(env) == len(children) and dirty_cells == 0:
             break
         
-        # Performe an environment change
         # Performe a robot turn
+        # Performe an environment change
+        for child in children:
+            child.react()
 
         # Performe a random environment change
         if t0 % t == 0:

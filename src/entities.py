@@ -64,3 +64,6 @@ class Playpen(EnvironmentElement):
 class Child(EnvironmentElement):
     def __str__(self):
         return self.num < 10 and f'C0{self.num}' or f'C{self.num}'
+    
+    def react(self):
+        pass
