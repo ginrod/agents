@@ -204,13 +204,13 @@ def run_simulation(env, file, t=50):
     register_msg(f'\n{pretty_print_env(env)}\n', file)
     total_cells = len(env) * len(env[0])
 
-    t0 = 0
+    t0 = 1
     dirty_cells = count_dirty_cells(env)
     children_count = count_children(env)
 
     # Performe a robot turn
 
-    while t0 < 100 * t:
+    while t0 <= 100 * t:
         if dirty_cells >= 0.6 * total_cells:
             break
 
@@ -219,6 +219,10 @@ def run_simulation(env, file, t=50):
         
         # Performe an environment change
         # Performe a robot turn
+
+        # Performe a random environment change
+        if t0 % t == 0:
+            pass
 
         dirty_cells = count_dirty_cells(env)
         t0 += 1
