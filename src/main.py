@@ -65,14 +65,6 @@ def create_initial_environment(agent):
         x, y = free_cells[idx]
         env[x][y] = (Void(x, y, env), Obstacle(x, y, env), Void(x, y, env))
         free_cells.remove((x, y))
-    
-    x = 1
-    for y in range(cols):
-        env[x][y] = (Void(x, y, env), Obstacle(x, y, env), Void(x, y, env))
-    
-    x, y = 2, 0
-    env[x][y] = (Void(x, y, env), agent(x, y, env), Void(x, y, env))
-    robotX, robotY = 2, 0
 
     walk_obstacles = ((Void, Obstacle, Void),)
     pi, _ = find_paths(env, (robotX, robotY), obstacles=walk_obstacles)
@@ -173,8 +165,7 @@ def find_paths(env, s, obstacles):
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             next_pos = (nx, ny)
-            if inside(env, nx, ny) and next_pos != s and visited[nx][ny] == 0 and \
-                not match_obstacles(env[nx][ny], obstacles):
+            if inside(env, nx, ny) and next_pos != s and visited[nx][ny] == 0 and not match_obstacles(env[nx][ny]):
                 q.insert(0, next_pos)
                 pi[next_pos] = (x, y)
                 visited[nx][ny] = visited[x][y] + 1
