@@ -120,6 +120,32 @@ class Objective:
         
         return Objective(find, perform, name="bring-children-to-playpen")
 
+    @staticmethod
+    def build_clear_block_objective(env, robot, blocked_pos):
+        def find(env, robot, blocked_pos):
+            robot_pos = robot.x, robot.y
+            if robot_pos == blocked_pos and robot.carried_child:
+                obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
+                for dx, dy in directions:
+                    nx, ny = robot.x + dx, robot.y + dy
+                    if inside(env, nx, ny) and not isinstance(env[nx][ny], obstacles):
+                        return nx, ny
+            
+            return blocked_pos
+
+        def perform(env, robot, blocked_pos):
+            pos = find(env, robot, blocked_pos)
+            robot_pos = robot.x, robot.y
+            if robot_pos != blocked_pos and robot.carried_child:
+                robot.drop()
+            elif robot_pos != blocked_pos:
+                robot.move(pos)
+            else:
+                robot.clean(pos)
+        
+        return Objective(find, perform, name="bring-children-to-playpen")
+    
+
     def __init__(self, find_func, perform_func, name=None):
         self.is_in_course = False
         self.find_func = find_func
