@@ -18,7 +18,7 @@ def register_msg(msg, file, only_file=False):
         print(msg, end="")
     file.write(msg)
 
-def create_initial_environment(agent):
+def create_initial_environment():
     rows, cols = random.randint(5, 10), random.randint(5, 10)
     env = [[None for _ in range(cols)] for _ in range(rows)]
     
@@ -56,7 +56,6 @@ def create_initial_environment(agent):
     # Generating robot
     idx = random.randint(0, len(free_cells) - 1)
     robotX, robotY = free_cells[idx]
-    env[x][y] = (Void(x, y, env), agent(x, y, env), Void(x, y, env))
 
     pi_no_obstacles, _ = find_paths(env, (robotX, robotY), obstacles=None)
 
@@ -94,7 +93,7 @@ def create_initial_environment(agent):
         env[x][y] = (Void(x, y, env), child, Void(x, y, env))
         free_cells.remove((x, y))
 
-    return env
+    return env, (robotX, robotY)
 
 def run_simulation(env, file, t=50):
     register_msg(f'\n\n#Turno 0', file, only_file=True)
@@ -153,14 +152,16 @@ if __name__ == '__main__':
     
     agents = [ProactiveAgent, ReactiveAgent]
     sim_num = 1
+    environments = [create_initial_environment() for _ in range(10)]
     for r_num, agent in enumerate(agents):
-        environments = [create_initial_environment(agent) for _ in range(10)]
-        for e_num, environment in enumerate(environments):
-            for _ in range(1):
+        for e_num, env_info in enumerate(environments):
+            env, (rx, ry) = env_info # env and robot position
+            env[rx][ry] = (Void(rx, ry, env), agent(rx, ry, env), Void(rx, ry, env))
+            for _ in range(iterations):
                 register_msg(f"#Simulacion {sim_num}\n", file)
                 register_msg(f"#Robot de tipo {r_num}\n", file)
                 register_msg(f"#Ambiente {e_num + 1}", file)
-                run_simulation(environment, file, t)
+                run_simulation(env, file, t)
                 sim_num += 1
     
     file.close()
