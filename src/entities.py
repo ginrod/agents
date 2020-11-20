@@ -48,6 +48,14 @@ class EnvironmentElement:
         self.y = y
         self.env = env
     
+    def _move(self, new_pos):
+        nx, ny = new_pos
+        # Move to new_pos position
+        x, y, env = self.x, self.y, self.env
+        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+        self.x, self.y = nx, ny
+        self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
+    
     def __repr__(self):
         return str(self)
 
@@ -58,14 +66,6 @@ class Void(EnvironmentElement):
 class Obstacle(EnvironmentElement):
     def __str__(self):
         return ' O '
-    
-    def _move(self, new_pos):
-        nx, ny = new_pos
-        # Move to new_pos position
-        x, y, env = self.x, self.y, self.env
-        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
-        self.x, self.y = nx, ny
-        self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
 
     def push(self, direction):
         dx, dy = direction
@@ -94,14 +94,6 @@ class Playpen(EnvironmentElement):
 class Child(EnvironmentElement):
     def __str__(self):
         return self.num < 10 and f'C0{self.num}' or f'C{self.num}'
-    
-    def _move(self, new_pos):
-        nx, ny = new_pos
-        # Move to new_pos position
-        x, y, env = self.x, self.y, self.env
-        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
-        self.x, self.y = nx, ny
-        self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
 
     def react(self):
         inside_directions = [(dx,dy) for dx,dy in directions if inside(self.env, self.x + dx, self.y + dy)]

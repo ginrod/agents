@@ -19,10 +19,22 @@ class Objective:
             
             return build_path(robot_pos, closest_dirt_pos, pi)
 
-    def __init__(self, find_func, perfom_func, name=None):
+        def perform(env, robot_pos):
+            path = find(env, robot_pos)
+            x, y = robot_pos
+
+            if len(path) == 1:
+                env[x][y][0].clean()
+                return
+
+            env[x][y][1]._move(path[1])
+        
+        return Objective(find, perform, name="dirty-alert")
+
+    def __init__(self, find_func, perform_func, name=None):
         self.is_in_course = False
         self.find_func = find_func
-        self.perfom_func = perfom_func
+        self.perform_func = perform_func
         self.name = name
 
 class Agent(EnvironmentElement):
