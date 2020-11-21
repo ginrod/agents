@@ -38,16 +38,16 @@ class Objective:
                     d1 = deterimine_direction(path[0], path[1])
                     d2 = deterimine_direction(path[1], path[2])
                     if d1 == d2:
-                        robot.move(path[2], children)
+                        robot.move(path[2], env_info)
                         return
                 elif len(path) == 2:
                     robot.drop()
                     return
 
-            robot.move(path[1], children)
+            robot.move(path[1], env_info)
         
         def check_if_completed(objective, env, robot, env_info):
-            void_cells, dirty_cells = env_info['void-cells'], env_info['dirty_cells']
+            void_cells, dirty_cells = env_info['void-cells'], env_info['dirty-cells']
             return robot.check_dirty_alert(void_cells, dirty_cells)
 
         return Objective(find, perform, check_if_completed, name="dirty-alert")
@@ -79,10 +79,6 @@ class Objective:
             path = find(env, robot, env_info)
             x, y = robot_pos
 
-            if len(path) == 0:
-                foo = 0
-                path = find(env, robot, env_info)
-
             if len(path) == 1:
                 robot.clean()
                 return
@@ -92,13 +88,13 @@ class Objective:
                     d1 = deterimine_direction(path[0], path[1])
                     d2 = deterimine_direction(path[1], path[2])
                     if d1 == d2:
-                        robot.move(path[2], children)
+                        robot.move(path[2], env_info)
                         return
                     elif len(path) == 2:
                         robot.drop()
                         return
 
-            robot.move(path[1], children)
+            robot.move(path[1], env_info)
         
         def check_if_completed(objective, env, robot, env_info):
             rx, ry = robot.x, robot.y
@@ -161,10 +157,6 @@ class Objective:
             path = find(env, robot, env_info)
             x, y = robot_pos
 
-            if len(path) == 0:
-                foo = 0
-                path = find(env, robot, env_info)
-
             if len(path) == 1 and robot.carried_child:
                 robot.drop()
                 return
@@ -173,10 +165,10 @@ class Objective:
                 d1 = deterimine_direction(path[0], path[1])
                 d2 = deterimine_direction(path[1], path[2])
                 if d1 == d2:
-                    robot.move(path[2], children)
+                    robot.move(path[2], env_info)
                     return
 
-            robot.move(path[1], children)
+            robot.move(path[1], env_info)
         
         def check_if_completed(objective, env, robot, env_info):
             rx, ry = robot.x, robot.y
@@ -200,13 +192,12 @@ class Objective:
 
         def perform(env, robot, env_info):
             blocked_pos = env_info['blocked-pos']
-            children = env_info['children']
             pos = find(env, robot, blocked_pos)
             robot_pos = robot.x, robot.y
             if robot_pos != blocked_pos and robot.carried_child:
                 robot.drop()
             elif robot_pos != blocked_pos:
-                robot.move(pos, children)
+                robot.move(pos, env_info)
             else:
                 robot.clean(pos)
         
@@ -272,14 +263,15 @@ class MySmartAgent(Agent):
         
         return active_objective
 
-    def trigger_clear_block_objective(self, blocked_pos):
+    def trigger_clear_block_objective(self, env_info):
         active_objective = self.get_active_objective()
         active_objective.is_in_course = False
         active_objective = self.objectives['clear-block']
         active_objective.is_in_course = True
-        self.perform_action({ 'blocked-position': blocked_pos })
+        self.perform_action(env_info)
 
-    def move(self, new_pos, children):
+    def move(self, new_pos, env_info):
+        children = env_info['children']
         nx, ny = new_pos
         void = ((Void, Void, Void),)
 
@@ -288,7 +280,8 @@ class MySmartAgent(Agent):
             if child_pos == new_pos:
                 if self.carried_child and not match_types(self.env[nx][ny], void):
                     # trigger clear-block objective
-                    self.trigger_clear_block_objective((nx, ny))
+                    env_info['blocked-position'] = nx, ny
+                    self.trigger_clear_block_objective(env_info)
                 else:
                     if self.carried_child:
                         self.carried_child.x, self.carried_child.y = nx, ny

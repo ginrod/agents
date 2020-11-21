@@ -3,8 +3,6 @@ from entities import *
 import random
 
 def build_path(start, end, pi):
-    if not end in pi: return []
-
     path, curr = [], end
     while curr != start:
         path.append(curr)
