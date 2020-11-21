@@ -165,6 +165,7 @@ if __name__ == '__main__':
     file = open('sim_logs.txt', 'a', encoding='utf-8')
     
     agents = [ProactiveAgent, ReactiveAgent]
+    # agents = [ReactiveAgent, ProactiveAgent]
     sim_num = 1
     environments = [create_initial_environment() for _ in range(10)]
     for r_num, agent in enumerate(agents):

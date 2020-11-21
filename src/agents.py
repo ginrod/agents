@@ -373,6 +373,9 @@ class ProactiveAgent(MySmartAgent):
         else:
             # Search closest objective
             closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
+            active_objective = self.objectives[closest_objective_name]
+            active_objective.perform(env, self, env_info)
+            active_objective.check_if_completed(active_objective, env, self, env_info)
 
 class ReactiveAgent(MySmartAgent):
     def __init__(self, x, y, env, interrupted_objectives_limit=10):
