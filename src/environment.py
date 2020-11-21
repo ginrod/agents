@@ -152,3 +152,23 @@ def creates_a_barrier(env, pos):
     # Check if puting a child in pos (sx, sy) creates a barrier of obstacles (vertical or horizontal)
     # considering a playpen with a child an obstacle for a robot carring another child
     return creates_vertical_barrier(env, pos) or creates_horizontal_barrier(env, pos)
+
+def dirt_grid(env, grid_left_corner):
+    sx, sy = grid_left_corner
+
+    free_cells, children = [], 0
+    for x in range(sx, sx + 3):
+        for y in range(sy, sy + 3):
+            if isinstance(env[x][y][1], Void):
+                free_cells.append((x, y))
+            elif isinstance(env[x][y][1], Child):
+                children += 1
+    
+    max_per_children = children == 1 and 1 or children == 2 and 3 or children >= 3 and 6 or 0
+    random_count = random.randint(0, max_per_children)
+    dirt_count = min(random_count, len(free_cells))
+
+    for _ in range(dirt_count):
+        idx = random.randint(0, len(free_cells) - 1)
+        x, y = free_cells[idx]
+        env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
