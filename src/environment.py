@@ -260,3 +260,9 @@ def random_change(env, robot, children):
         
         for x, y in dirts_positions:
             env[x][y] = Void(x, y, env), Dirt(x, y, env), Void(x, y, env)
+
+def deterimine_direction(pos1, pos2):
+    x1, y1 = pos1
+    x2, y2 = pos2
+    
+    return x2 - x1, y2 - y1

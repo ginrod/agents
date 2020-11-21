@@ -31,6 +31,17 @@ class Objective:
             if len(path) == 1:
                 robot.clean()
                 return
+            
+            if robot.carried_child and 
+                if len(path) > 3:
+                    d1 = deterimine_direction(path[0], path[1])
+                    d2 = deterimine_direction(path[1], path[2])
+                    if d1 == d2:
+                        robot.move(path[2])
+                        return
+                elif len(path) == 2:
+                    robot.drop()
+                    return
 
             robot.move(path[1])
         
@@ -69,6 +80,17 @@ class Objective:
             if len(path) == 1:
                 robot.clean()
                 return
+            
+            if robot.carried_child and 
+                if len(path) > 3:
+                    d1 = deterimine_direction(path[0], path[1])
+                    d2 = deterimine_direction(path[1], path[2])
+                    if d1 == d2:
+                        robot.move(path[2])
+                        return
+                    elif len(path) == 2:
+                        robot.drop()
+                        return
 
             robot.move(path[1])
         
@@ -138,6 +160,13 @@ class Objective:
                 else:
                     robot.drop()
                 return
+            
+            if robot.carried_child and len(path) >= 3:
+                d1 = deterimine_direction(path[0], path[1])
+                d2 = deterimine_direction(path[1], path[2])
+                if d1 == d2:
+                    robot.move(path[2])
+                    return
 
             robot.move(path[1])
         
