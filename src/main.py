@@ -116,7 +116,8 @@ def run_simulation(env, file, t=50, print_to_file=False):
         register_msg(f'#Turno {t0}', file, print_to_file, print_to_console=False)
         
         # Performe a robot turn
-        robot.performe_action((dirty_cells, void_cells, children))
+        env_info = { 'dirty-cells': dirty_cells, 'void-cells': void_cells, 'children': children }
+        robot.perform_action(env_info)
 
         # Performe an environment change
         all_grids = set()
