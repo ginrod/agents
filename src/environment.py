@@ -111,3 +111,44 @@ def get_children(env):
                 children.append(child_in_pos1)
     
     return children
+
+
+def get_robot(env):
+    for line in env:
+        for robot_in_pos1, robot_in_pos2, _ in line:
+            if isinstance(robot_in_pos1, Agent):
+                return robot_in_pos1
+
+            if isinstance(robot_in_pos2, Agent):
+                return robot_in_pos2
+
+def creates_vertical_barrier(env, pos):
+    rows, cols = len(env), len(env[0])
+    sx, sy = pos
+
+    # Check if puting a child in pos (sx, sy) creates a vertical barrier of obstacles
+    # considering a playpen with a child an obstacle for a robot carring another child
+    obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
+    for y in range(cols):
+        if y != ys and not isinstance(env[sx][y], obstacles):
+            return False
+    
+    return True
+
+def creates_horizontal_barrier(env, pos):
+    rows, cols = len(env), len(env[0])
+    sx, sy = pos
+
+    # Check if puting a child in pos (sx, sy) creates a vertical barrier of obstacles
+    # considering a playpen with a child an obstacle for a robot carring another child
+    obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
+    for x in range(rows):
+        if x != sx and not isinstance(env[x][sy], obstacles):
+            return False
+    
+    return True
+
+def creates_a_barrier(env, pos):
+    # Check if puting a child in pos (sx, sy) creates a barrier of obstacles (vertical or horizontal)
+    # considering a playpen with a child an obstacle for a robot carring another child
+    return creates_vertical_barrier(env, pos) or creates_horizontal_barrier(env, pos)
