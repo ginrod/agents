@@ -31,6 +31,17 @@ class Objective:
             if len(path) == 1:
                 robot.clean()
                 return
+            
+            if robot.carried_child and 
+                if len(path) > 3:
+                    d1 = deterimine_direction(path[0], path[1])
+                    d2 = deterimine_direction(path[1], path[2])
+                    if d1 == d2:
+                        robot.move(path[2])
+                        return
+                elif len(path) == 2:
+                    robot.drop()
+                    return
 
             robot.move(path[1])
         
@@ -69,6 +80,17 @@ class Objective:
             if len(path) == 1:
                 robot.clean()
                 return
+            
+            if robot.carried_child and 
+                if len(path) > 3:
+                    d1 = deterimine_direction(path[0], path[1])
+                    d2 = deterimine_direction(path[1], path[2])
+                    if d1 == d2:
+                        robot.move(path[2])
+                        return
+                    elif len(path) == 2:
+                        robot.drop()
+                        return
 
             robot.move(path[1])
         
@@ -138,6 +160,13 @@ class Objective:
                 else:
                     robot.drop()
                 return
+            
+            if robot.carried_child and len(path) >= 3:
+                d1 = deterimine_direction(path[0], path[1])
+                d2 = deterimine_direction(path[1], path[2])
+                if d1 == d2:
+                    robot.move(path[2])
+                    return
 
             robot.move(path[1])
         
@@ -229,6 +258,22 @@ class MySmartAgent(Agent):
             env[nx][ny] = (self, env[nx][ny][1], child_in_pos2)
             self.carried_child = child_in_pos1
 
+    def get_active_objective(self):
+        active_objective = None
+        for objective in self.objectives.values():
+            if objective.is_in_course:
+                active_objective = objective
+                break
+        
+        return active_objective
+
+    def trigger_clear_block_objective(self, blocked_pos):
+        active_objective = self.get_active_objective()
+        active_objective.is_in_course = False
+        active_objective = self.objectives['clear-block']
+        active_objective.is_in_course = True
+        self.perform_action({ 'blocked-position': blocked_pos })
+
     def move(self, new_pos, children):
         nx, ny = new_pos
         void = ((Void, Void, Void),)
@@ -236,18 +281,18 @@ class MySmartAgent(Agent):
         for child in children:
             child_pos = child.x, child.y
             if child_pos == new_pos:
-                if self.carried_child and not isinstance(self.env[nx][y], void):
+                if self.carried_child and not isinstance(self.env[nx][ny], void):
                     # trigger clear-block objective
-                    pass
+                    self.trigger_clear_block_objective((nx, ny))
                 else:
                     if self.carried_child:
                         self.carried_child.x, self.carried_child.y = nx, ny
                     self._carry_child(new_pos)
                 return
         
-        if self.carried_child and not isinstance(self.env[nx][y], void):
+        if self.carried_child and not isinstance(self.env[nx][ny], void):
             # trigger clear-block objective
-            pass
+            self.trigger_clear_block_objective((nx, ny))
         else:
             if self.carried_child:
                 self.carried_child.x, self.carried_child.y = nx, ny
@@ -307,11 +352,7 @@ class ProactiveAgent(MySmartAgent):
             
             self.objectives['dirty-alert'].is_in_course = True
 
-        active_objective = None
-        for objective in self.objectives.values():
-            if objective.is_in_course:
-                active_objective = objective
-                break
+        active_objective = self.get_active_objective()
         
         robot_pos, env = (self.x, self.y), self.env
         obstacles = ((Void, Obstacle, Void),)
@@ -359,11 +400,7 @@ class ReactiveAgent(MySmartAgent):
             
             self.objectives['dirty-alert'].is_in_course = True
 
-        active_objective = None
-        for objective in self.objectives.values():
-            if objective.is_in_course:
-                active_objective = objective
-                break
+        active_objective = self.get_active_objective()
         
         robot_pos, env = (self.x, self.y), self.env
         obstacles = ((Void, Obstacle, Void),)
