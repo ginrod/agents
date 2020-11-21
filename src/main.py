@@ -99,7 +99,8 @@ def create_initial_environment():
 
 def run_simulation(env, file, t=50, print_to_file=False):
     register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=False)
-    register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+    # register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+    register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=True)
     rows, cols = len(env), len(env[0])
 
     t0 = 1
@@ -136,7 +137,8 @@ def run_simulation(env, file, t=50, print_to_file=False):
             register_msg(f'#Turno {t0} de variación aleatoria', file, print_to_file, print_to_console=False)
             random_change(env, robot, children)
 
-        register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+        # register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+        register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=True)
 
         dirty_cells = count_dirty_cells(env)
         t0 += 1

@@ -43,19 +43,20 @@ def find_playpen_cells(env, length):
     play_pen_cells = build_path(start_pos, end_pos, pi)
 
     return play_pen_cells
-    
-def find_paths(env, s, obstacles):
-    def match_obstacles(curr_cell):
-        if not obstacles: 
-            return False
 
-        c1, c2, c3 = curr_cell
-        for t1, t2, t3 in obstacles:
-            if isinstance(c1, t1) and isinstance(c2, t2) and isinstance(c3, t3):
-                return True
-        
+def match_types(curr_cell, types):
+    if not types: 
         return False
 
+    c1, c2, c3 = curr_cell
+    for t1, t2, t3 in types:
+        if isinstance(c1, t1) and isinstance(c2, t2) and isinstance(c3, t3):
+            return True
+    
+    return False
+
+
+def find_paths(env, s, obstacles):
     rows, cols = len(env), len(env[0])
     visited = [[0 for _ in range(cols)] for _ in range(rows)]
     q, pi = [s], {}
@@ -66,7 +67,7 @@ def find_paths(env, s, obstacles):
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             next_pos = (nx, ny)
-            if inside(env, nx, ny) and next_pos != s and visited[nx][ny] == 0 and not match_obstacles(env[nx][ny]):
+            if inside(env, nx, ny) and next_pos != s and visited[nx][ny] == 0 and not match_types(env[nx][ny], obstacles):
                 q.insert(0, next_pos)
                 pi[next_pos] = (x, y)
                 visited[nx][ny] = visited[x][y] + 1

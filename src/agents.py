@@ -313,7 +313,7 @@ class MySmartAgent(Agent):
 
         for x in range(rows):
             for y in range(cols):
-                if isinstance(env[x][y], objectives_targets) and visit[x][y] < closest_path_len:
+                if match_types(env[x][y], objectives_targets) and visit[x][y] < closest_path_len:
                     closest_path_len = visit[x][y]
                     closest_target_pos = x, y
         
@@ -372,7 +372,7 @@ class ProactiveAgent(MySmartAgent):
 
         else:
             # Search closest objective
-            closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
+            closest_objective_name, _ = self.get_closest_objective(pi, visit)
             active_objective = self.objectives[closest_objective_name]
             active_objective.perform(env, self, env_info)
             active_objective.check_if_completed(active_objective, env, self, env_info)
