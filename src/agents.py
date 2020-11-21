@@ -375,6 +375,7 @@ class ProactiveAgent(MySmartAgent):
             # Search closest objective
             closest_objective_name, _ = self.get_closest_objective(pi, visit)
             active_objective = self.objectives[closest_objective_name]
+            active_objective.is_in_course = True
             active_objective.perform(env, self, env_info)
             active_objective.check_if_completed(active_objective, env, self, env_info)
 
@@ -424,4 +425,8 @@ class ReactiveAgent(MySmartAgent):
 
         else:
             # Search closest objective
-            closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
+            closest_objective_name, _ = self.get_closest_objective(pi, visit)
+            active_objective = self.objectives[closest_objective_name]
+            active_objective.is_in_course = True
+            active_objective.perform(env, self, env_info)
+            active_objective.check_if_completed(active_objective, env, self, env_info)
