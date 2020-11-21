@@ -368,7 +368,7 @@ class ProactiveAgent(MySmartAgent):
                         active_objective.is_in_course = True
                         self.change_behaviour = False
 
-            active_objective.perform()
+            active_objective.perform(env, self, env_info)
             completed = active_objective.check_if_completed(active_objective, env, self, env_info)
 
             if completed:
@@ -428,7 +428,7 @@ class ReactiveAgent(MySmartAgent):
                     else:
                         self.change_behaviour = False
 
-            active_objective.perform()
+            active_objective.perform(env, self, env_info)
             completed = active_objective.check_if_completed(active_objective, env, self, env_info)
 
             if completed:
