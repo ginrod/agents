@@ -131,7 +131,7 @@ def creates_vertical_barrier(env, pos):
     # considering a playpen with a child an obstacle for a robot carring another child
     obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
     for y in range(cols):
-        if y != ys and not isinstance(env[sx][y], obstacles):
+        if y != ys and not match_types(env[sx][y], obstacles):
             return False
     
     return True
@@ -144,7 +144,7 @@ def creates_horizontal_barrier(env, pos):
     # considering a playpen with a child an obstacle for a robot carring another child
     obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
     for x in range(rows):
-        if x != sx and not isinstance(env[x][sy], obstacles):
+        if x != sx and not match_types(env[x][sy], obstacles):
             return False
     
     return True
@@ -162,7 +162,7 @@ def dirt_grid(env, grid_left_corner):
         for y in range(sy, sy + 3):
             if isinstance(env[x][y][1], Void):
                 free_cells.append((x, y))
-            elif isinstance(env[x][y], ((Void, Child, Void),)):
+            elif match_types(env[x][y], ((Void, Child, Void),)):
                 children += 1
     
     max_per_children = children == 1 and 1 or children == 2 and 3 or children >= 3 and 6 or 0
@@ -196,7 +196,7 @@ def random_change(env, robot, children):
     children_to_be_relocated = []
     for child in children:
         x, y = child.x, child.y
-        if isinstance(env[x][y], ((Void, Child, Void),)):
+        if match_types(env[x][y], ((Void, Child, Void),)):
             env[x][y] = Void(x, y, env), Void(x, y, env), Void(x, y, env)
             children_to_be_relocated.append(child)
     

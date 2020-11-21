@@ -172,7 +172,7 @@ class Objective:
         
         def check_if_completed(objective, env, robot, env_info):
             rx, ry = robot.x, robot.y
-            return isinstance(env[rx][ry], ((Agent, Playpen, Child),)) and not robot.carried_child
+            return match_types(env[rx][ry], ((Agent, Playpen, Child),)) and not robot.carried_child
 
         return Objective(find, perform, check_if_completed, name="bring-children-to-playpen")
 
@@ -185,7 +185,7 @@ class Objective:
                 obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
                 for dx, dy in directions:
                     nx, ny = robot.x + dx, robot.y + dy
-                    if inside(env, nx, ny) and not isinstance(env[nx][ny], obstacles):
+                    if inside(env, nx, ny) and not match_types(env[nx][ny], obstacles):
                         return nx, ny
             
             return blocked_pos
@@ -277,7 +277,7 @@ class MySmartAgent(Agent):
         for child in children:
             child_pos = child.x, child.y
             if child_pos == new_pos:
-                if self.carried_child and not isinstance(self.env[nx][ny], void):
+                if self.carried_child and not match_types(self.env[nx][ny], void):
                     # trigger clear-block objective
                     self.trigger_clear_block_objective((nx, ny))
                 else:
@@ -286,7 +286,7 @@ class MySmartAgent(Agent):
                     self._carry_child(new_pos)
                 return
         
-        if self.carried_child and not isinstance(self.env[nx][ny], void):
+        if self.carried_child and not match_types(self.env[nx][ny], void):
             # trigger clear-block objective
             self.trigger_clear_block_objective((nx, ny))
         else:
