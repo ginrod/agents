@@ -123,7 +123,7 @@ class Objective:
                         closest_path_child_len = visit[x][y]
                         closest_child_pos = x, y
             
-            if closest_dirt_pos == (-1, -1):
+            if closest_child_pos == (-1, -1):
                 return [robot_pos]
             
             return build_path(robot_pos, closest_child_pos, pi)
