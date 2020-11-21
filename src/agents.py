@@ -32,7 +32,7 @@ class Objective:
                 robot.clean()
                 return
             
-            if robot.carried_child and 
+            if robot.carried_child: 
                 if len(path) > 3:
                     d1 = deterimine_direction(path[0], path[1])
                     d2 = deterimine_direction(path[1], path[2])
@@ -81,7 +81,7 @@ class Objective:
                 robot.clean()
                 return
             
-            if robot.carried_child and 
+            if robot.carried_child: 
                 if len(path) > 3:
                     d1 = deterimine_direction(path[0], path[1])
                     d2 = deterimine_direction(path[1], path[2])
@@ -207,7 +207,7 @@ class Objective:
             return isinstance(env[bx][by][1], Void) or \
                   (isinstance(env[bx][by][1], Playpen) and isinstance(env[bx][by][2], Void))
 
-        return Objective(find, perform, check_if_completed. name="clear-block")
+        return Objective(find, perform, check_if_completed, name="clear-block")
     
     def __init__(self, find_func, perform_func, check_if_completed_func, name=None):
         self.is_in_course = False
@@ -223,7 +223,7 @@ class Agent(EnvironmentElement):
 
 class MySmartAgent(Agent):
 
-    def __init__(self, x, y, env)
+    def __init__(self, x, y, env):
         super(MySmartAgent, self).__init__(x, y, env)
         self.carried_child = None
         dirty_alert = Objective.build_dirty_alert_objective()
@@ -331,7 +331,7 @@ class MySmartAgent(Agent):
         raise NotImplementedError
 
 class ProactiveAgent(MySmartAgent):
-    def __init__(self, x, y, env, ignored_objectives_limit=20)
+    def __init__(self, x, y, env, ignored_objectives_limit=20):
         super(ProactiveAgent, self).__init__(x, y, env)
         self.ignored_objectives = 0
         self.ignored_objectives_limit = ignored_objectives_limit
@@ -339,7 +339,7 @@ class ProactiveAgent(MySmartAgent):
 
     def perform_action(self, env_info):
         dirty_cells = env_info['dirty-cells']
-        void_cells =  env_info['void_cells']
+        void_cells = env_info['void_cells']
         children = env_info['children']
 
         if self.ignored_objectives >= self.ignored_objectives_limit:
@@ -379,7 +379,7 @@ class ProactiveAgent(MySmartAgent):
             closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
 
 class ReactiveAgent(MySmartAgent):
-    def __init__(self, x, y, env, interrupted_objectives_limit=10)
+    def __init__(self, x, y, env, interrupted_objectives_limit=10):
         super(ReactiveAgent, self).__init__(x, y, env)
         self.interrupted_objectives = 0
         self.interrupted_objectives_limit = interrupted_objectives_limit
@@ -387,7 +387,7 @@ class ReactiveAgent(MySmartAgent):
 
     def perform_action(self, env_info):
         dirty_cells = env_info['dirty-cells']
-        void_cells =  env_info['void_cells']
+        void_cells = env_info['void_cells']
         children = env_info['children']
 
         if self.interrupted_objectives >= self.interrupted_objectives_limit:
