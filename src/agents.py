@@ -79,6 +79,10 @@ class Objective:
             path = find(env, robot, env_info)
             x, y = robot_pos
 
+            if len(path) == 0:
+                foo = 0
+                path = find(env, robot, env_info)
+
             if len(path) == 1:
                 robot.clean()
                 return
@@ -140,7 +144,7 @@ class Objective:
 
             for x in range(rows):
                 for y in range(cols):
-                    if isinstance(env[x][y][1], Child) and visit[x][y] < closest_path_playpen_len and \
+                    if isinstance(env[x][y][1], Playpen) and visit[x][y] < closest_path_playpen_len and \
                         (in_play_pen == len(children) - 1 or not creates_a_barrier(env, (x,y))):
                         closest_path_playpen_len = visit[x][y]
                         closest_playpen_pos = x, y
@@ -156,6 +160,10 @@ class Objective:
             children = env_info['children']
             path = find(env, robot, env_info)
             x, y = robot_pos
+
+            if len(path) == 0:
+                foo = 0
+                path = find(env, robot, env_info)
 
             if len(path) == 1 and robot.carried_child:
                 robot.drop()
