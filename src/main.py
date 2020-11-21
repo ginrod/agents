@@ -132,7 +132,8 @@ def run_simulation(env, file, t=50, print_to_file=False):
 
         # Performe a random environment change
         if t0 % t == 0:
-            pass
+            register_msg(f'#Turno {t0} de variación aleatoria', file, print_to_file, print_to_console=False)
+            random_change(env, robot, children)
 
         register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
 
