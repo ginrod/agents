@@ -55,7 +55,6 @@ def match_types(curr_cell, types):
     
     return False
 
-
 def find_paths(env, s, obstacles):
     rows, cols = len(env), len(env[0])
     visited = [[0 for _ in range(cols)] for _ in range(rows)]
@@ -113,7 +112,6 @@ def get_children(env):
     
     return children
 
-
 def get_robot(env):
     for line in env:
         for robot_in_pos1, robot_in_pos2, _ in line:
@@ -154,19 +152,29 @@ def creates_a_barrier(env, pos):
     # considering a playpen with a child an obstacle for a robot carring another child
     return creates_vertical_barrier(env, pos) or creates_horizontal_barrier(env, pos)
 
-def dirt_grid(env, grid_left_corner):
+def children_in_grid(env, grid_left_corner):
     sx, sy = grid_left_corner
 
-    free_cells, children = [], 0
+    children = 0
+    for x in range(sx, sx + 3):
+        for y in range(sy, sy + 3):
+            if match_types(env[x][y], ((Void, Child, Void),)):
+                children += 1
+    
+    return children
+
+def dirt_grid(env, grid_left_corner, children_in_grid_dic):
+    sx, sy = grid_left_corner
+    children = (sx, sy) in children_in_grid_dic and children_in_grid_dic[sx, sy] or 0 
+    
+    free_cells = []
     for x in range(sx, sx + 3):
         for y in range(sy, sy + 3):
             if isinstance(env[x][y][1], Void):
                 free_cells.append((x, y))
-            elif match_types(env[x][y], ((Void, Child, Void),)):
-                children += 1
     
-    max_per_children = children == 1 and 1 or children == 2 and 3 or children >= 3 and 6 or 0
-    random_count = random.randint(0, max_per_children)
+    max_dirt_by_children_count = children == 1 and 1 or children == 2 and 3 or children >= 3 and 6 or 0
+    random_count = random.randint(0, max_dirt_by_children_count)
     dirt_count = min(random_count, len(free_cells))
 
     for _ in range(dirt_count):
