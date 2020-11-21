@@ -119,8 +119,16 @@ def run_simulation(env, file, t=50, print_to_file=False):
         robot.performe_action((dirty_cells, void_cells, children))
 
         # Performe an environment change
+        all_grids = set()
+        for child in children:
+            for curr_grids in child.get_3x3_grids_containing_child():
+                all_grids |= curr_grids
+
         for child in children:
             child.react()
+        
+        for grid_left_corner in all_grids:
+            dirt_grid(env, grid_left_corner)
 
         # Performe a random environment change
         if t0 % t == 0:

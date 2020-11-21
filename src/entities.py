@@ -117,3 +117,28 @@ class Child(EnvironmentElement):
             # If new pos is now Void the push could be performed
             if isinstance(self.env[nx][ny][1], Void):
                 self._move((nx, ny))
+    
+    def get_3x3_grids_containing_child(self):
+        x, y, env = self.x, self.y, self.env
+        result = set() # left corner of the 3x3 grid
+
+        # If child is carried by the robot or in the playpen return no grids 
+        if isinstance(env[x][y][0], Agent) or isinstance(env[x][y][1], Playpen):
+            return result
+
+        # Checking that the coords can be a left corner of a 3x3 grid
+        if inside(env, x + 2, y + 2):
+            result.add((x, y))
+
+        left_most_directions = [Direction.west(), Direction.north_west(), Direction.north()]
+        for dx1, dy1 in left_most_directions:
+            nx, ny = x + dx1, y + dy1
+            if inside(env, nx, ny) and inside(env, nx + 2, ny + 2):
+                result.add((nx, ny))
+            
+            for dx2, dy2 in left_most_directions:
+                nx, ny = x + dx1 + dx2, y + dy1 + dy2
+                if inside(env, nx, ny) and inside(env, nx + 2, ny + 2):
+                    result.add((nx, ny))
+        
+        return result
