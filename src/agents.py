@@ -25,7 +25,7 @@ class Objective:
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
-            path = find(env, robot_pos)
+            path = find(env, robot_pos, env_info)
             x, y = robot_pos
 
             if len(path) == 1:
@@ -74,7 +74,7 @@ class Objective:
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
-            path = find(env, robot_pos)
+            path = find(env, robot_pos, env_info)
             x, y = robot_pos
 
             if len(path) == 1:
@@ -151,7 +151,7 @@ class Objective:
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
-            path = find(env, robot_pos)
+            path = find(env, robot_pos, env_info)
             x, y = robot_pos
 
             if len(path) == 1:
