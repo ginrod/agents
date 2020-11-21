@@ -3,24 +3,27 @@ from environment import *
 class Objective:
 
     @staticmethod
-    def build_dirty_alert_objective(env, robot):
-        def find(env, robot):
+    def build_dirty_alert_objective():
+        def find(env, robot, env_info):
             robot_pos = robot.x, robot.y
             rows, cols = len(env), len(env[0])
             obstacles = ((Void, Obstacle, Void),)
             pi, visit  = find_paths(env, robot_pos, obstacles)
 
             closest_path_dirt_len = rows * cols
-            closest_dirt_pos = 0, 0
+            closest_dirt_pos = -1, -1
             for x in range(rows):
                 for y in range(cols):
                     if isinstance(env[x][y][1], Dirt) and visit[x][y] < closest_path_dirt_len:
                         closest_path_dirt_len = visit[x][y]
                         closest_dirt_pos = x, y
             
+            if closest_dirt_pos == (-1, -1):
+                return [robot_pos]
+
             return build_path(robot_pos, closest_dirt_pos, pi)
 
-        def perform(env, robot):
+        def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
             path = find(env, robot_pos)
             x, y = robot_pos
@@ -31,27 +34,34 @@ class Objective:
 
             robot.move(path[1])
         
-        return Objective(find, perform, name="dirty-alert")
+        def check_if_completed(objective, env, robot, env_info):
+            void_cells, dirty_cells = env_info['void-cells'], env_info['dirty_cells']
+            return robot.check_dirty_alert(void_cells, dirty_cells)
+
+        return Objective(find, perform, check_if_completed, name="dirty-alert")
 
     @staticmethod
-    def build_clean_objective(env, robot):
-        def find(env, robot):
+    def build_clean_objective():
+        def find(env, robot, env_info):
             robot_pos = robot.x, robot.y
             rows, cols = len(env), len(env[0])
             obstacles = ((Void, Obstacle, Void),)
             pi, visit  = find_paths(env, robot_pos, obstacles)
 
             closest_path_dirt_len = rows * cols
-            closest_dirt_pos = 0, 0
+            closest_dirt_pos = -1, -1
             for x in range(rows):
                 for y in range(cols):
                     if isinstance(env[x][y][1], Dirt) and visit[x][y] < closest_path_dirt_len:
                         closest_path_dirt_len = visit[x][y]
                         closest_dirt_pos = x, y
             
+            if closest_dirt_pos == (-1, -1):
+                return [robot_pos]
+            
             return build_path(robot_pos, closest_dirt_pos, pi)
 
-        def perform(env, robot):
+        def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
             path = find(env, robot_pos)
             x, y = robot_pos
@@ -62,10 +72,19 @@ class Objective:
 
             robot.move(path[1])
         
-        return Objective(find, perform, name="clean")
+        def check_if_completed(objective, env, robot, env_info):
+            rx, ry = robot.x, robot.y
+            if objective.on_dirty_cell:
+               objective.on_dirty_cell = False
+               return True
+            
+            objective.on_dirty_cell = isinstance(env[rx][ry][1], Dirt)
+            return False
+
+        return Objective(find, perform, check_if_completed, name="clean")
     
     @staticmethod
-    def build_bring_children_to_playpen_objective(env, robot, children):
+    def build_bring_children_to_playpen_objective(env, robot, env_info):
         def find_child(env, robot):
             robot_pos = robot.x, robot.y
             rows, cols = len(env), len(env[0])
@@ -79,6 +98,9 @@ class Objective:
                     if isinstance(env[x][y][1], Child) and visit[x][y] < closest_path_dirt_len:
                         closest_path_child_len = visit[x][y]
                         closest_child_pos = x, y
+            
+            if closest_dirt_pos == (-1, -1):
+                return [robot_pos]
             
             return build_path(robot_pos, closest_child_pos, pi)
         
@@ -101,10 +123,11 @@ class Objective:
             
             return build_path(robot_pos, closest_playpen_pos, pi)
         
-        def find(env, robot, children):
+        def find(env, robot, env_info):
+            children = env_info['children']
             return not robot.carring_child and find_child(env, robot) or find_playpen(env, robot, children)
 
-        def perform(env, robot):
+        def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
             path = find(env, robot_pos)
             x, y = robot_pos
@@ -118,11 +141,16 @@ class Objective:
 
             robot.move(path[1])
         
-        return Objective(find, perform, name="bring-children-to-playpen")
+        def check_if_completed(objective, env, robot, env_info):
+            rx, ry = robot.x, robot.y
+            return isinstance(env[rx][ry], ((Agent, Playpen, Child),)) and not robot.carried_child
+
+        return Objective(find, perform, check_if_completed, name="bring-children-to-playpen")
 
     @staticmethod
-    def build_clear_block_objective(env, robot, blocked_pos):
-        def find(env, robot, blocked_pos):
+    def build_clear_block_objective(env, robot, env_info):
+        def find(env, robot, env_info):
+            blocked_pos = env_info['blocked-pos']
             robot_pos = robot.x, robot.y
             if robot_pos == blocked_pos and robot.carried_child:
                 obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
@@ -133,7 +161,8 @@ class Objective:
             
             return blocked_pos
 
-        def perform(env, robot, blocked_pos):
+        def perform(env, robot, env_info):
+            blocked_pos = env_info['blocked-pos']
             pos = find(env, robot, blocked_pos)
             robot_pos = robot.x, robot.y
             if robot_pos != blocked_pos and robot.carried_child:
@@ -143,28 +172,39 @@ class Objective:
             else:
                 robot.clean(pos)
         
-        return Objective(find, perform, name="bring-children-to-playpen")
+        def check_if_completed(objective, env, robot, env_info):
+            bx, by = env_info['blocked-pos']
+
+            return isinstance(env[bx][by][1], Void) or \
+                  (isinstance(env[bx][by][1], Playpen) and isinstance(env[bx][by][2], Void))
+
+        return Objective(find, perform, check_if_completed. name="clear-block")
     
-
-    def __init__(self, find_func, perform_func, name=None):
+    def __init__(self, find_func, perform_func, check_if_completed_func, name=None):
         self.is_in_course = False
-        self.find_func = find_func
-        self.perform_func = perform_func
+        self.find = find_func
+        self.perform = perform_func
+        self.check_if_completed = check_if_completed_func
         self.name = name
-
+        self.on_dirty_cell = False
+    
 class Agent(EnvironmentElement):
     def __str__(self):
         return ' R '
 
 class MySmartAgent(Agent):
 
-    def __init__(self, x, y, env):
+    def __init__(self, x, y, env)
         super(MySmartAgent, self).__init__(x, y, env)
         self.carried_child = None
-
-    @property
-    def objectives(self):
-        pass
+        dirty_alert = Objective.build_dirty_alert_objective()
+        clean = Objective.build_clean_objective()
+        bring_children_to_playpen = Objective.build_bring_children_to_playpen_objective()
+        clear_block = Objective.build_clear_block_objective()
+        self.objectives = { 
+            dirty_alert.name: dirty_alert, clear_block.name: clear_block,
+            bring_children_to_playpen.name : bring_children_to_playpen, clean.name: clean
+        }
     
     def _carry_child(self, new_pos):
         nx, ny = new_pos
@@ -206,9 +246,7 @@ class MySmartAgent(Agent):
                 self.carried_child.x, self.carried_child.y = nx, ny
             self._move(new_pos)
 
-    def check_dirty_alert(self, void_cells):
-        dirty_cells = count_dirty_cells(self.env)
-
+    def check_dirty_alert(self, void_cells, dirty_cells):
         return dirty_cells >= 0.55 * (void_cells + dirty_cells)
     
     def clean(self):
@@ -220,9 +258,75 @@ class MySmartAgent(Agent):
         raise NotImplementedError
 
 class ProactiveAgent(MySmartAgent):
-    def perform_action(env_info):
+    def __init__(self, x, y, env)
+        super(ProactiveAgent, self).__init__(x, y, env)
+
+    def perform_action(self, env_info):
         dirty_cells, void_cells, children = env_info
 
 class ReactiveAgent(MySmartAgent):
-    def perform_action(env_info):
-        dirty_cells, void_cells, children = env_info
+    def __init__(self, x, y, env)
+        super(ReactiveAgent, self).__init__(x, y, env)
+        self.interrupted_objectives = 0
+        self.env_info = None
+
+    def get_closest_objective(self, pi, visit):
+        robot_pos, env = (self.x, self.y), self.env
+        rows, cols = len(env), len(env[0])
+
+        closest_path_len = rows * cols
+        closest_target_pos = -1, -1
+        objectives_targets = self.carried_child and ((Void, Playpen, Void), (Void, Dirt, Void)) or \
+                             ((Void, Child, Void), (Void, Dirt, Void))
+
+        for x in range(rows):
+            for y in range(cols):
+                if isinstance(env[x][y], objectives_targets) and visit[x][y] < closest_path_len:
+                    closest_path_len = visit[x][y]
+                    closest_target_pos = x, y
+        
+        tx, ty = closest_target_pos
+        target = env[tx][ty][1]
+        objectives_name = isinstance(target, Dirt) and 'clean' or 'bring-children-to-playpen'
+        
+        return objectives_name, closest_target_pos
+
+    def perform_action(self, env_info):
+        dirty_cells = env_info['dirty-cells']
+        void_cells =  env_info['void_cells']
+        children = env_info['children']
+
+        if self.check_dirty_alert(void_cells, dirty_cells):
+            for objective in self.objectives.values():
+                objective.is_in_course = False
+            
+            self.objectives['dirty-alert'].is_in_course = True
+
+        active_objective = None
+        for objective in self.objectives.values():
+            if objective.is_in_course:
+                active_objective = objective
+                break
+        
+        robot_pos, env = (self.x, self.y), self.env
+        obstacles = ((Void, Obstacle, Void),)
+        pi, visit = find_paths(env, robot_pos, obstacles)
+
+        if active_objective:
+            if active_objective.name not in ['clear-block', 'dirty-alert']:
+                # Search closest objective
+                closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
+                if active_objective.name != closest_objective_name:
+                    self.interrupted_objectives += 1
+                
+                active_objective.is_in_course = False
+                active_objective = self.objectives[closest_objective_name]
+                active_objective.is_in_course = True
+
+            env_info['target-pos'] = active_objective.target_pos
+            active_objective.perform()
+            active_objective.check_if_completed(active_objective, env, self, env_info)
+
+        else:
+            # Search closest objective
+            closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
