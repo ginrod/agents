@@ -106,7 +106,7 @@ class Objective:
         return Objective(find, perform, check_if_completed, name="clean")
     
     @staticmethod
-    def build_bring_children_to_playpen_objective(env, robot, env_info):
+    def build_bring_children_to_playpen_objective():
         def find_child(env, robot):
             robot_pos = robot.x, robot.y
             rows, cols = len(env), len(env[0])
@@ -177,7 +177,7 @@ class Objective:
         return Objective(find, perform, check_if_completed, name="bring-children-to-playpen")
 
     @staticmethod
-    def build_clear_block_objective(env, robot, env_info):
+    def build_clear_block_objective():
         def find(env, robot, env_info):
             blocked_pos = env_info['blocked-pos']
             robot_pos = robot.x, robot.y
