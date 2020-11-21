@@ -63,6 +63,10 @@ class EnvironmentElement:
     def __repr__(self):
         return str(self)
 
+class Agent(EnvironmentElement):
+    def __str__(self):
+        return ' R '
+
 class Void(EnvironmentElement):
     def __str__(self):
         return '   '

@@ -216,10 +216,6 @@ class Objective:
         self.check_if_completed = check_if_completed_func
         self.name = name
         self.on_dirty_cell = False
-    
-class Agent(EnvironmentElement):
-    def __str__(self):
-        return ' R '
 
 class MySmartAgent(Agent):
 
@@ -335,7 +331,7 @@ class ProactiveAgent(MySmartAgent):
         super(ProactiveAgent, self).__init__(x, y, env)
         self.ignored_objectives = 0
         self.ignored_objectives_limit = ignored_objectives_limit
-        self.change_behaviour = Falseinterrupted_objectives_limit
+        self.change_behaviour = False
 
     def perform_action(self, env_info):
         dirty_cells = env_info['dirty-cells']
