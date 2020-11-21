@@ -54,8 +54,12 @@ class EnvironmentElement:
         x, y, env = self.x, self.y, self.env
         self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
         self.x, self.y = nx, ny
-        self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
-    
+
+        if isinstance(env[nx][ny][1], Void):
+            self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
+        else:
+            self.env[nx][ny] = (self, env[nx][ny][1], env[nx][ny][2])
+
     def __repr__(self):
         return str(self)
 

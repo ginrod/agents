@@ -206,6 +206,13 @@ class MySmartAgent(Agent):
             bring_children_to_playpen.name : bring_children_to_playpen, clean.name: clean
         }
     
+    def drop(self):
+        if not self.carried_child:
+            print('CALL TO DROP ON ROBOT WITH NO CARRIED CHILD')
+            return
+        
+        self.carried_child = None
+    
     def _carry_child(self, new_pos):
         nx, ny = new_pos
         # Move to new_pos position
@@ -253,22 +260,6 @@ class MySmartAgent(Agent):
         x, y, env = self.x, self.y, self.env
         robot = env[x][y][0]
         env[x][y] = (Void(x, y, env), robot, Void(x, y, env))
-    
-    def perform_action(self, env_info):
-        raise NotImplementedError
-
-class ProactiveAgent(MySmartAgent):
-    def __init__(self, x, y, env)
-        super(ProactiveAgent, self).__init__(x, y, env)
-
-    def perform_action(self, env_info):
-        dirty_cells, void_cells, children = env_info
-
-class ReactiveAgent(MySmartAgent):
-    def __init__(self, x, y, env)
-        super(ReactiveAgent, self).__init__(x, y, env)
-        self.interrupted_objectives = 0
-        self.env_info = None
 
     def get_closest_objective(self, pi, visit):
         robot_pos, env = (self.x, self.y), self.env
@@ -292,9 +283,23 @@ class ReactiveAgent(MySmartAgent):
         return objectives_name, closest_target_pos
 
     def perform_action(self, env_info):
+        raise NotImplementedError
+
+class ProactiveAgent(MySmartAgent):
+    def __init__(self, x, y, env, ignored_objectives_limit=20)
+        super(ProactiveAgent, self).__init__(x, y, env)
+        self.ignored_objectives = 0
+        self.ignored_objectives_limit = ignored_objectives_limit
+        self.change_behaviour = Falseinterrupted_objectives_limit
+
+    def perform_action(self, env_info):
         dirty_cells = env_info['dirty-cells']
         void_cells =  env_info['void_cells']
         children = env_info['children']
+
+        if self.ignored_objectives >= self.ignored_objectives_limit:
+            self.ignored_objectives = 0
+            self.change_behaviour = True
 
         if self.check_dirty_alert(void_cells, dirty_cells):
             for objective in self.objectives.values():
@@ -317,13 +322,66 @@ class ReactiveAgent(MySmartAgent):
                 # Search closest objective
                 closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
                 if active_objective.name != closest_objective_name:
-                    self.interrupted_objectives += 1
-                
-                active_objective.is_in_course = False
-                active_objective = self.objectives[closest_objective_name]
-                active_objective.is_in_course = True
+                    if not self.change_behaviour:
+                        self.ignored_objectives += 1
+                    else:
+                        active_objective.is_in_course = False
+                        active_objective = self.objectives[closest_objective_name]
+                        active_objective.is_in_course = True
+                        self.change_behaviour = False
 
-            env_info['target-pos'] = active_objective.target_pos
+            active_objective.perform()
+            active_objective.check_if_completed(active_objective, env, self, env_info)
+
+        else:
+            # Search closest objective
+            closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
+
+class ReactiveAgent(MySmartAgent):
+    def __init__(self, x, y, env, interrupted_objectives_limit=10)
+        super(ReactiveAgent, self).__init__(x, y, env)
+        self.interrupted_objectives = 0
+        self.interrupted_objectives_limit = interrupted_objectives_limit
+        self.change_behaviour = Falseinterrupted_objectives_limit
+
+    def perform_action(self, env_info):
+        dirty_cells = env_info['dirty-cells']
+        void_cells =  env_info['void_cells']
+        children = env_info['children']
+
+        if self.interrupted_objectives >= self.interrupted_objectives_limit:
+            self.interrupted_objectives_limit = 0
+            self.change_behaviour = True
+
+        if self.check_dirty_alert(void_cells, dirty_cells):
+            for objective in self.objectives.values():
+                objective.is_in_course = False
+            
+            self.objectives['dirty-alert'].is_in_course = True
+
+        active_objective = None
+        for objective in self.objectives.values():
+            if objective.is_in_course:
+                active_objective = objective
+                break
+        
+        robot_pos, env = (self.x, self.y), self.env
+        obstacles = ((Void, Obstacle, Void),)
+        pi, visit = find_paths(env, robot_pos, obstacles)
+
+        if active_objective:
+            if active_objective.name not in ['clear-block', 'dirty-alert']:
+                # Search closest objective
+                closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
+                if active_objective.name != closest_objective_name:
+                    if not self.change_behaviour:
+                        self.interrupted_objectives += 1
+                        active_objective.is_in_course = False
+                        active_objective = self.objectives[closest_objective_name]
+                        active_objective.is_in_course = True
+                    else:
+                        self.change_behaviour = False
+
             active_objective.perform()
             active_objective.check_if_completed(active_objective, env, self, env_info)
 
