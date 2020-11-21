@@ -335,7 +335,7 @@ class ProactiveAgent(MySmartAgent):
 
     def perform_action(self, env_info):
         dirty_cells = env_info['dirty-cells']
-        void_cells = env_info['void_cells']
+        void_cells = env_info['void-cells']
         children = env_info['children']
 
         if self.ignored_objectives >= self.ignored_objectives_limit:
@@ -383,7 +383,7 @@ class ReactiveAgent(MySmartAgent):
 
     def perform_action(self, env_info):
         dirty_cells = env_info['dirty-cells']
-        void_cells = env_info['void_cells']
+        void_cells = env_info['void-cells']
         children = env_info['children']
 
         if self.interrupted_objectives >= self.interrupted_objectives_limit:
