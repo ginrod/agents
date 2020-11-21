@@ -119,7 +119,7 @@ class Objective:
             closest_child_pos = 0, 0
             for x in range(rows):
                 for y in range(cols):
-                    if isinstance(env[x][y][1], Child) and visit[x][y] < closest_path_dirt_len:
+                    if isinstance(env[x][y][1], Child) and visit[x][y] < closest_path_child_len:
                         closest_path_child_len = visit[x][y]
                         closest_child_pos = x, y
             
