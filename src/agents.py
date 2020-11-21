@@ -140,7 +140,7 @@ class Objective:
 
             for x in range(rows):
                 for y in range(cols):
-                    if isinstance(env[x][y][1], Child) and visit[x][y] < closest_path_dirt_len and \
+                    if isinstance(env[x][y][1], Child) and visit[x][y] < closest_path_playpen_len and \
                         (in_play_pen == len(children) - 1 or not creates_a_barrier(env, (x,y))):
                         closest_path_playpen_len = visit[x][y]
                         closest_playpen_pos = x, y
