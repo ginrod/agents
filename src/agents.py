@@ -149,7 +149,7 @@ class Objective:
         
         def find(env, robot, env_info):
             children = env_info['children']
-            return not robot.carring_child and find_child(env, robot) or find_playpen(env, robot, children)
+            return not robot.carried_child and find_child(env, robot) or find_playpen(env, robot, children)
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
