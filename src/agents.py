@@ -369,7 +369,11 @@ class ProactiveAgent(MySmartAgent):
                         self.change_behaviour = False
 
             active_objective.perform()
-            active_objective.check_if_completed(active_objective, env, self, env_info)
+            completed = active_objective.check_if_completed(active_objective, env, self, env_info)
+
+            if completed:
+                active_objective.is_in_course = False
+                self.ignored_objectives = 0
 
         else:
             # Search closest objective
@@ -377,7 +381,11 @@ class ProactiveAgent(MySmartAgent):
             active_objective = self.objectives[closest_objective_name]
             active_objective.is_in_course = True
             active_objective.perform(env, self, env_info)
-            active_objective.check_if_completed(active_objective, env, self, env_info)
+            completed = active_objective.check_if_completed(active_objective, env, self, env_info)
+
+            if completed:
+                active_objective.is_in_course = False
+                self.ignored_objectives = 0
 
 class ReactiveAgent(MySmartAgent):
     def __init__(self, x, y, env, interrupted_objectives_limit=10):
@@ -421,12 +429,19 @@ class ReactiveAgent(MySmartAgent):
                         self.change_behaviour = False
 
             active_objective.perform()
-            active_objective.check_if_completed(active_objective, env, self, env_info)
+            completed = active_objective.check_if_completed(active_objective, env, self, env_info)
 
+            if completed:
+                active_objective.is_in_course = False
+                self.interrupted_objectives = 0
         else:
             # Search closest objective
             closest_objective_name, _ = self.get_closest_objective(pi, visit)
             active_objective = self.objectives[closest_objective_name]
             active_objective.is_in_course = True
             active_objective.perform(env, self, env_info)
-            active_objective.check_if_completed(active_objective, env, self, env_info)
+            completed = active_objective.check_if_completed(active_objective, env, self, env_info)
+
+            if completed:
+                active_objective.is_in_course = False
+                self.interrupted_objectives = 0
