@@ -161,7 +161,7 @@ def dirt_grid(env, grid_left_corner):
         for y in range(sy, sy + 3):
             if isinstance(env[x][y][1], Void):
                 free_cells.append((x, y))
-            elif isinstance(env[x][y][1], Child):
+            elif isinstance(env[x][y], ((Void, Child, Void),)):
                 children += 1
     
     max_per_children = children == 1 and 1 or children == 2 and 3 or children >= 3 and 6 or 0
@@ -172,3 +172,91 @@ def dirt_grid(env, grid_left_corner):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
         env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+
+def get_element_pos(env, element):
+    elements_positions = []
+    for line in env:
+        for _, element_in_center, _ in line:
+            if isinstance(element_in_center, element):
+                elements_positions.append((element_in_center.x, element_in_center.y))
+
+    return elements_positions
+
+def clear_positions(env, positions):
+    for x, y in positions:
+        env[x][y] = Void(x, y, env), Void(x, y, env), Void(x, y, env)
+
+def random_change(env, robot, children):
+    # Clear obstacles
+    obstacles_positions = get_element_pos(env, Obstacle)
+    clear_positions(obstacles_positions)
+    
+    # Clear positions of alone childs
+    children_to_be_relocated = []
+    for child in children:
+        x, y = child.x, child.y
+        if isinstance(env[x][y], ((Void, Child, Void),)):
+            env[x][y] = Void(x, y, env), Void(x, y, env), Void(x, y, env)
+            children_to_be_relocated.append(child)
+    
+    # Clear dirts
+    dirts_positions = get_element_pos(env, Dirt)
+    clear_positions(dirts_positions)
+
+    free_cells_positions = get_element_pos(env, Void)
+    playpen_cells = get_element_pos(env, Playpen)
+
+    retries = 0
+    while retries <= 100:
+        # Relocating obstacles
+        free_cells = list(free_cells_positions)
+        for _ in range(len(obstacles_positions)):
+            idx = random.randint(0, len(free_cells) - 1)
+            x, y = free_cells[idx]
+            env[x][y] = (Void(x, y, env), Obstacle(x, y, env), Void(x, y, env))
+            free_cells.remove((x, y))
+
+        walk_obstacles = ((Void, Obstacle, Void),)
+        pi, _ = find_paths(env, (robot.x, robot.y), obstacles=walk_obstacles)
+        free_cells = [pos for pos in free_cells if pos in pi]
+
+        # Checking that achivable cells count is enough for dirts and children for relocation
+        if len(free_cells) < len(dirts_positions) + len(children_to_be_relocated):
+            retries += 1
+            continue
+        
+        # Checking that all playpen cells are achievable
+        for x, y in playpen_cells:
+            if (x, y) not in pi:
+                retries += 1
+                continue
+        
+        # Relocating children
+        for child in range(children_to_be_relocated):
+            idx = random.randint(0, len(free_cells) - 1)
+            x, y = free_cells[idx]
+            child.x, child.y = x, y
+            env[x][y] = (Void(x, y, env), child, Void(x, y, env))
+            free_cells.remove((x, y))
+        
+        # Relocating dirts
+        for _ in range(len(dirts_positions)):
+            idx = random.randint(0, len(free_cells) - 1)
+            x, y = free_cells[idx]
+            env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+            free_cells.remove((x, y))
+        
+        break
+    
+    # Over a 100 attempts a feasible relocation could not be performed
+    # so the objects will be return to the original positions
+    if retries > 100:
+        for x, y in obstacles_positions:
+            env[x][y] = Void(x, y, env), Obstacle(x, y, env), Void(x, y, env)
+        
+        for child in children_to_be_relocated:
+            x, y = child.x, child.y
+            env[x][y] = Void(x, y, env), child, Void(x, y, env)
+        
+        for x, y in dirts_positions:
+            env[x][y] = Void(x, y, env), Dirt(x, y, env), Void(x, y, env)
