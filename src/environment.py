@@ -129,7 +129,7 @@ def creates_vertical_barrier(env, pos):
     # considering a playpen with a child an obstacle for a robot carring another child
     obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
     for y in range(cols):
-        if y != ys and not match_types(env[sx][y], obstacles):
+        if y != sy and not match_types(env[sx][y], obstacles):
             return False
     
     return True
