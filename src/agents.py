@@ -25,6 +25,7 @@ class Objective:
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
+            children = env_info['children']
             path = find(env, robot, env_info)
             x, y = robot_pos
 
@@ -37,13 +38,13 @@ class Objective:
                     d1 = deterimine_direction(path[0], path[1])
                     d2 = deterimine_direction(path[1], path[2])
                     if d1 == d2:
-                        robot.move(path[2])
+                        robot.move(path[2], children)
                         return
                 elif len(path) == 2:
                     robot.drop()
                     return
 
-            robot.move(path[1])
+            robot.move(path[1], children)
         
         def check_if_completed(objective, env, robot, env_info):
             void_cells, dirty_cells = env_info['void-cells'], env_info['dirty_cells']
@@ -74,6 +75,7 @@ class Objective:
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
+            children = env_info['children']
             path = find(env, robot, env_info)
             x, y = robot_pos
 
@@ -86,13 +88,13 @@ class Objective:
                     d1 = deterimine_direction(path[0], path[1])
                     d2 = deterimine_direction(path[1], path[2])
                     if d1 == d2:
-                        robot.move(path[2])
+                        robot.move(path[2], children)
                         return
                     elif len(path) == 2:
                         robot.drop()
                         return
 
-            robot.move(path[1])
+            robot.move(path[1], children)
         
         def check_if_completed(objective, env, robot, env_info):
             rx, ry = robot.x, robot.y
@@ -151,24 +153,22 @@ class Objective:
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
+            children = env_info['children']
             path = find(env, robot, env_info)
             x, y = robot_pos
 
-            if len(path) == 1:
-                if not robot.carried_child:
-                    robot.move()
-                else:
-                    robot.drop()
+            if len(path) == 1 and robot.carried_child:
+                robot.drop()
                 return
             
             if robot.carried_child and len(path) >= 3:
                 d1 = deterimine_direction(path[0], path[1])
                 d2 = deterimine_direction(path[1], path[2])
                 if d1 == d2:
-                    robot.move(path[2])
+                    robot.move(path[2], children)
                     return
 
-            robot.move(path[1])
+            robot.move(path[1], children)
         
         def check_if_completed(objective, env, robot, env_info):
             rx, ry = robot.x, robot.y
@@ -192,12 +192,13 @@ class Objective:
 
         def perform(env, robot, env_info):
             blocked_pos = env_info['blocked-pos']
+            children = env_info['children']
             pos = find(env, robot, blocked_pos)
             robot_pos = robot.x, robot.y
             if robot_pos != blocked_pos and robot.carried_child:
                 robot.drop()
             elif robot_pos != blocked_pos:
-                robot.move(pos)
+                robot.move(pos, children)
             else:
                 robot.clean(pos)
         
