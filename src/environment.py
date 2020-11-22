@@ -6,7 +6,11 @@ def build_path(start, end, pi):
     path, curr = [], end
     while curr != start:
         path.append(curr)
-        curr = pi[curr]
+        try:
+            curr = pi[curr]
+        except:
+            foo = 0
+            break
     path.append(start)
     path.reverse()
 
@@ -178,7 +182,7 @@ def dirt_grid(env, grid_left_corner, children_in_grid_dic):
     for _ in range(dirt_count):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
-        env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+        env[x][y] = (Void(x, y), Dirt(x, y), Void(x, y))
 
 def get_element_pos(env, element):
     elements_positions = []
@@ -191,7 +195,7 @@ def get_element_pos(env, element):
 
 def clear_positions(env, positions):
     for x, y in positions:
-        env[x][y] = Void(x, y, env), Void(x, y, env), Void(x, y, env)
+        env[x][y] = Void(x, y), Void(x, y), Void(x, y)
 
 def random_change(env, robot, children):
     # Clear obstacles
@@ -203,7 +207,7 @@ def random_change(env, robot, children):
     for child in children:
         x, y = child.x, child.y
         if match_types(env[x][y], ((Void, Child, Void),)):
-            env[x][y] = Void(x, y, env), Void(x, y, env), Void(x, y, env)
+            env[x][y] = Void(x, y), Void(x, y), Void(x, y)
             children_to_be_relocated.append(child)
     
     # Clear dirts
@@ -220,7 +224,7 @@ def random_change(env, robot, children):
         for _ in range(len(obstacles_positions)):
             idx = random.randint(0, len(free_cells) - 1)
             x, y = free_cells[idx]
-            env[x][y] = (Void(x, y, env), Obstacle(x, y, env), Void(x, y, env))
+            env[x][y] = (Void(x, y), Obstacle(x, y), Void(x, y))
             free_cells.remove((x, y))
 
         walk_obstacles = ((Void, Obstacle, Void),)
@@ -243,14 +247,14 @@ def random_change(env, robot, children):
             idx = random.randint(0, len(free_cells) - 1)
             x, y = free_cells[idx]
             child.x, child.y = x, y
-            env[x][y] = (Void(x, y, env), child, Void(x, y, env))
+            env[x][y] = (Void(x, y), child, Void(x, y))
             free_cells.remove((x, y))
         
         # Relocating dirts
         for _ in range(len(dirts_positions)):
             idx = random.randint(0, len(free_cells) - 1)
             x, y = free_cells[idx]
-            env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+            env[x][y] = (Void(x, y), Dirt(x, y), Void(x, y))
             free_cells.remove((x, y))
         
         break
@@ -259,14 +263,14 @@ def random_change(env, robot, children):
     # so the objects will be return to the original positions
     if retries > 100:
         for x, y in obstacles_positions:
-            env[x][y] = Void(x, y, env), Obstacle(x, y, env), Void(x, y, env)
+            env[x][y] = Void(x, y), Obstacle(x, y), Void(x, y)
         
         for child in children_to_be_relocated:
             x, y = child.x, child.y
-            env[x][y] = Void(x, y, env), child, Void(x, y, env)
+            env[x][y] = Void(x, y), child, Void(x, y)
         
         for x, y in dirts_positions:
-            env[x][y] = Void(x, y, env), Dirt(x, y, env), Void(x, y, env)
+            env[x][y] = Void(x, y), Dirt(x, y), Void(x, y)
 
 def deterimine_direction(pos1, pos2):
     x1, y1 = pos1

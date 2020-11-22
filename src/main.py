@@ -43,7 +43,7 @@ def create_initial_environment():
     for x in range(rows):
         for y in range(cols):
             if env[x][y] == None:
-                env[x][y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+                env[x][y] = (Void(x, y), Void(x, y), Void(x, y))
 
 
     # Generate play pen cells
@@ -52,7 +52,7 @@ def create_initial_environment():
     # Generating play pen cells
     free_cells = [(x, y) for y in range(cols) for x in range(rows)]
     for x, y in playpen_cells:
-        env[x][y] = (Void(x, y, env), Playpen(x, y, env), Void(x, y, env))
+        env[x][y] = (Void(x, y), Playpen(x, y), Void(x, y))
         free_cells.remove((x, y))
     
     # Generating robot
@@ -65,7 +65,7 @@ def create_initial_environment():
     for _ in range(obstacles_count):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
-        env[x][y] = (Void(x, y, env), Obstacle(x, y, env), Void(x, y, env))
+        env[x][y] = (Void(x, y), Obstacle(x, y), Void(x, y))
         free_cells.remove((x, y))
 
     walk_obstacles = ((Void, Obstacle, Void),)
@@ -77,7 +77,7 @@ def create_initial_environment():
         if (x, y) not in pi:
             shortest_path_without_obstacles = build_path((robotX, robotY), (x, y), pi_no_obstacles)
             for x, y in shortest_path_without_obstacles[1:len(shortest_path_without_obstacles)-1]:
-                env[x][y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+                env[x][y] = (Void(x, y), Void(x, y), Void(x, y))
                 if (x, y) not in free_cells:
                     free_cells.append((x,y))
 
@@ -89,16 +89,16 @@ def create_initial_environment():
     for _ in range(dirt_count):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
-        env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+        env[x][y] = (Void(x, y), Dirt(x, y), Void(x, y))
         free_cells.remove((x, y))
 
     # Generating children
     for child_num in range(children_count):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
-        child = Child(x, y, env)
+        child = Child(x, y)
         child.num = child_num
-        env[x][y] = (Void(x, y, env), child, Void(x, y, env))
+        env[x][y] = (Void(x, y), child, Void(x, y))
         free_cells.remove((x, y))
 
     return env, (robotX, robotY)
@@ -126,7 +126,7 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
         register_msg(f'#Turno {t0}', file, print_to_file, print_to_console=True)
         
         # Performe a robot turn
-        robot.perform_action(env_info)
+        robot.perform_action(env, env_info)
 
         # Performe an environment change
         all_grids = get_3x3_grids(env)
@@ -140,7 +140,7 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
             if isinstance(env[x][y][1], Playpen):
                 continue
 
-            child.react()
+            child.react(env)
         
         for grid_left_corner in all_grids:
             dirt_grid(env, grid_left_corner, children_in_grid_dic)
@@ -203,7 +203,7 @@ if __name__ == '__main__':
             env, (rx, ry) = env_info # env and robot position
             env = copy_env(env) # use a copy of the env to keep the initial one
 
-            env[rx][ry] = (Void(rx, ry, env), agent(rx, ry, env), Void(rx, ry, env))
+            env[rx][ry] = (Void(rx, ry), agent(rx, ry), Void(rx, ry))
 
             for _ in range(iterations):
                 register_msg(f"#Simulacion {sim_num}\n", file, print_to_file=True)

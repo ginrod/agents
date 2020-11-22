@@ -40,13 +40,13 @@ class Objective:
                     d1 = deterimine_direction(path[0], path[1])
                     d2 = deterimine_direction(path[1], path[2])
                     if d1 == d2:
-                        robot.move(path[2], env_info)
+                        robot.move(path[2], env, env_info)
                         return
                 elif len(path) == 2:
                     robot.drop()
                     return
 
-            robot.move(path[1], env_info)
+            robot.move(path[1], env, env_info)
         
         def check_if_completed(objective, env, robot, env_info):
             void_cells, dirty_cells = env_info['void-cells'], env_info['dirty-cells']
@@ -92,13 +92,13 @@ class Objective:
                     d1 = deterimine_direction(path[0], path[1])
                     d2 = deterimine_direction(path[1], path[2])
                     if d1 == d2:
-                        robot.move(path[2], env_info)
+                        robot.move(path[2], env, env_info)
                         return
                     elif len(path) == 2:
                         robot.drop()
                         return
 
-            robot.move(path[1], env_info)
+            robot.move(path[1], env, env_info)
         
         def check_if_completed(objective, env, robot, env_info):
             rx, ry = robot.x, robot.y
@@ -174,11 +174,11 @@ class Objective:
                 d1 = deterimine_direction(path[0], path[1])
                 d2 = deterimine_direction(path[1], path[2])
                 if d1 == d2:
-                    robot.move(path[2], env_info)
+                    robot.move(path[2], env, env_info)
                     return
             
             if len(path) > 1:
-                robot.move(path[1], env_info)
+                robot.move(path[1], env, env_info)
         
         def check_if_completed(objective, env, robot, env_info):
             rx, ry = robot.x, robot.y
@@ -219,7 +219,7 @@ class Objective:
             if robot_pos != blocked_pos and robot.carried_child:
                 robot.drop()
             elif len(path) > 1:
-                robot.move(path[1], env_info)
+                robot.move(path[1], env, env_info)
             elif robot_pos == blocked_pos and isinstance(env[robot.x][robot.y][1], Dirt):
                 robot.clean()
         
@@ -241,8 +241,8 @@ class Objective:
 
 class MySmartAgent(Agent):
 
-    def __init__(self, x, y, env):
-        super(MySmartAgent, self).__init__(x, y, env)
+    def __init__(self, x, y):
+        super(MySmartAgent, self).__init__(x, y)
         self.carried_child = None
         dirty_alert = Objective.build_dirty_alert_objective()
         clean = Objective.build_clean_objective()
@@ -253,23 +253,22 @@ class MySmartAgent(Agent):
             bring_children_to_playpen.name : bring_children_to_playpen, clean.name: clean
         }
     
-    def _move(self, new_pos):
+    def _move(self, new_pos, env):
         nx, ny = new_pos
         # Move to new_pos position
-        x, y, env = self.x, self.y, self.env
-        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+        x, y = self.x, self.y
         self.x, self.y = nx, ny
 
         if isinstance(env[nx][ny][1], Void):
-            self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
+            env[nx][ny] = Void(nx, ny), self, Void(nx, ny)
         else:
-            self.env[nx][ny] = (self, env[nx][ny][1], env[nx][ny][2])
+            env[nx][ny] = self, env[nx][ny][1], env[nx][ny][2]
         
         if self.carried_child:
             if isinstance(env[nx][ny][1], Playpen):
                 env[nx][ny] = self, env[nx][ny][1], self.carried_child
             else:
-                env[nx][ny] = self, self.carried_child, Void(nx, ny, env)
+                env[nx][ny] = self, self.carried_child, Void(nx, ny)
     
     def drop(self):
         if not self.carried_child:
@@ -278,21 +277,21 @@ class MySmartAgent(Agent):
         
         self.carried_child = None
     
-    def _carry_child(self, new_pos):
+    def _carry_child(self, new_pos, env):
         nx, ny = new_pos
         # Move to new_pos position
-        x, y, env = self.x, self.y, self.env
-        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+        x, y = self.x, self.y
+        env[x][y] = Void(x, y), Void(x, y), Void(x, y)
         self.x, self.y = nx, ny
 
         _, child_in_pos1, child_in_pos2 = env[nx][ny]
 
         if isinstance(child_in_pos1, Child):
-            env[nx][ny] = (self, child_in_pos1, Void(nx, ny, env))
+            env[nx][ny] = self, child_in_pos1, Void(nx, ny)
             self.carried_child = child_in_pos1
         else:
-            env[nx][ny] = (self, env[nx][ny][1], child_in_pos2)
-            self.carried_child = child_in_pos1
+            env[nx][ny] = self, env[nx][ny][1], child_in_pos2
+            self.carried_child = child_in_pos2
 
     def get_active_objective(self):
         active_objective = None
@@ -303,15 +302,15 @@ class MySmartAgent(Agent):
         
         return active_objective
 
-    def trigger_clear_block_objective(self, env_info):
+    def trigger_clear_block_objective(self, env, env_info):
         active_objective = self.get_active_objective()
         if active_objective:
             active_objective.is_in_course = False
         active_objective = self.objectives['clear-block']
         active_objective.is_in_course = True
-        self.perform_action(env_info)
+        self.perform_action(env, env_info)
 
-    def move(self, new_pos, env_info):
+    def move(self, new_pos, env, env_info):
         children = env_info['children']
         nx, ny = new_pos
         availables = ((Void, Void, Void), (Void, Playpen, Void))
@@ -319,35 +318,35 @@ class MySmartAgent(Agent):
         for child in children:
             child_pos = child.x, child.y
             if child_pos == new_pos:
-                if self.carried_child and not match_types(self.env[nx][ny], availables):
+                if self.carried_child and not match_types(env[nx][ny], availables):
                     # trigger clear-block objective
                     env_info['blocked-position'] = nx, ny
-                    self.trigger_clear_block_objective(env_info)
+                    self.trigger_clear_block_objective(env, env_info)
                 else:
                     if self.carried_child:
                         self.carried_child.x, self.carried_child.y = nx, ny
-                    self._carry_child(new_pos)
+                    self._carry_child(new_pos, env)
                 return
         
-        if self.carried_child and not match_types(self.env[nx][ny], availables):
+        if self.carried_child and not match_types(env[nx][ny], availables):
             # trigger clear-block objective
             env_info['blocked-position'] = nx, ny
-            self.trigger_clear_block_objective(env_info)
+            self.trigger_clear_block_objective(env, env_info)
         else:
             if self.carried_child:
                 self.carried_child.x, self.carried_child.y = nx, ny
-            self._move(new_pos)
+            self._move(new_pos, env)
 
     def check_dirty_alert(self, void_cells, dirty_cells):
         return dirty_cells >= 0.55 * (void_cells + dirty_cells)
     
     def clean(self):
-        x, y, env = self.x, self.y, self.env
+        x, y, env = self.x, self.y, env
         robot = env[x][y][0]
-        env[x][y] = (Void(x, y, env), robot, Void(x, y, env))
+        env[x][y] = (Void(x, y), robot, Void(x, y))
 
     def get_closest_objective(self, pi, visit):
-        robot_pos, env = (self.x, self.y), self.env
+        robot_pos, env = (self.x, self.y), env
         rows, cols = len(env), len(env[0])
 
         closest_path_len = rows * cols
@@ -376,7 +375,7 @@ class MySmartAgent(Agent):
 
 class ProactiveAgent(MySmartAgent):
     def __init__(self, x, y, env, ignored_objectives_limit=20):
-        super(ProactiveAgent, self).__init__(x, y, env)
+        super(ProactiveAgent, self).__init__(x, y)
         self.ignored_objectives = 0
         self.ignored_objectives_limit = ignored_objectives_limit
         self.change_behaviour = False
@@ -402,7 +401,7 @@ class ProactiveAgent(MySmartAgent):
             self.objectives['dirty-alert'].is_in_course = True
 
         
-        robot_pos, env = (self.x, self.y), self.env
+        robot_pos, env = (self.x, self.y), env
         obstacles = ((Void, Obstacle, Void),)
         pi, visit = find_paths(env, robot_pos, obstacles)
 
@@ -440,7 +439,7 @@ class ProactiveAgent(MySmartAgent):
 
 class ReactiveAgent(MySmartAgent):
     def __init__(self, x, y, env, interrupted_objectives_limit=10):
-        super(ReactiveAgent, self).__init__(x, y, env)
+        super(ReactiveAgent, self).__init__(x, y)
         self.interrupted_objectives = 0
         self.interrupted_objectives_limit = interrupted_objectives_limit
         self.change_behaviour = False
@@ -465,7 +464,7 @@ class ReactiveAgent(MySmartAgent):
             
             self.objectives['dirty-alert'].is_in_course = True
         
-        robot_pos, env = (self.x, self.y), self.env
+        robot_pos, env = (self.x, self.y), env
         obstacles = ((Void, Obstacle, Void),)
         pi, visit = find_paths(env, robot_pos, obstacles)
 
