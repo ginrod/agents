@@ -207,7 +207,7 @@ class Objective:
             elif len(path) > 1:
                 robot.move(path[1], env_info)
             elif robot_pos == blocked_pos and isinstance(env[robot.x][robot.y][1], Dirt):
-                robot.clean(pos)
+                robot.clean()
         
         def check_if_completed(objective, env, robot, env_info):
             bx, by = env_info['blocked-position']
@@ -405,6 +405,9 @@ class ReactiveAgent(MySmartAgent):
         self.interrupted_objectives = 0
         self.interrupted_objectives_limit = interrupted_objectives_limit
         self.change_behaviour = False
+    
+    def __name__(self):
+        return 'ReactiveAgent'
 
     def perform_action(self, env_info):
         dirty_cells = env_info['dirty-cells']
