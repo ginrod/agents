@@ -347,7 +347,7 @@ class ProactiveAgent(MySmartAgent):
             self.ignored_objectives = 0
             self.change_behaviour = True
 
-        if active_objective.name != 'clear-block' and self.check_dirty_alert(void_cells, dirty_cells):
+        if (not active_objective or active_objective.name != 'clear-block') and self.check_dirty_alert(void_cells, dirty_cells):
             for objective in self.objectives.values():
                 objective.is_in_course = False
             
@@ -408,7 +408,7 @@ class ReactiveAgent(MySmartAgent):
             self.interrupted_objectives_limit = 0
             self.change_behaviour = True
 
-        if active_objective.name != 'clear-block' and self.check_dirty_alert(void_cells, dirty_cells):
+        if (not active_objective or active_objective.name != 'clear-block') and self.check_dirty_alert(void_cells, dirty_cells):
             for objective in self.objectives.values():
                 objective.is_in_course = False
             
