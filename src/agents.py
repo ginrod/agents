@@ -154,7 +154,7 @@ class Objective:
             path = find(env, robot, env_info)
             x, y = robot_pos
 
-            if len(path) == 1 and robot.carried_child:
+            if isinstance(env[x][y][1], Playpen) and robot.carried_child:
                 robot.drop()
                 return
             
@@ -164,8 +164,9 @@ class Objective:
                 if d1 == d2:
                     robot.move(path[2], env_info)
                     return
-
-            robot.move(path[1], env_info)
+            
+            if len(path) > 1:
+                robot.move(path[1], env_info)
         
         def check_if_completed(objective, env, robot, env_info):
             rx, ry = robot.x, robot.y

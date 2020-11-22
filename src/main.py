@@ -174,6 +174,9 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
         register_msg(f'\nLa simulación terminó porque el robot logró poner a los niños en el corral y limpiar la casa\n\n', file, print_to_file=True)
         sim_stats[robot_type]['finish'] += 1
 
+def copy_env(env):
+    return [list(line) for line in env]
+
 if __name__ == '__main__':
     import argparse
 
@@ -202,10 +205,13 @@ if __name__ == '__main__':
     for r_num, agent in enumerate(agents):
         for e_num, env_info in enumerate(environments):
             env, (rx, ry) = env_info # env and robot position
-            env[rx][ry] = (Void(rx, ry, env), agent(rx, ry, env), Void(rx, ry, env))
-            # foo = 0
-            if sim_num == 11:
+            env = copy_env(env) # use a copy of the env to keep the initial one
+            robot = get_robot(env)
+
+            if robot != None:
                 foo = 0
+
+            env[rx][ry] = (Void(rx, ry, env), agent(rx, ry, env), Void(rx, ry, env))
 
             for _ in range(iterations):
                 register_msg(f"#Simulacion {sim_num}\n", file, print_to_file=True)
