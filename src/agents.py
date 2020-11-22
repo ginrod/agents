@@ -253,6 +253,24 @@ class MySmartAgent(Agent):
             bring_children_to_playpen.name : bring_children_to_playpen, clean.name: clean
         }
     
+    def _move(self, new_pos):
+        nx, ny = new_pos
+        # Move to new_pos position
+        x, y, env = self.x, self.y, self.env
+        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+        self.x, self.y = nx, ny
+
+        if isinstance(env[nx][ny][1], Void):
+            self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
+        else:
+            self.env[nx][ny] = (self, env[nx][ny][1], env[nx][ny][2])
+        
+        if self.carried_child:
+            if isinstance(env[nx][ny][1], Playpen):
+                env[nx][ny] = self, env[nx][ny][1], self.carried_child
+            else:
+                env[nx][ny] = self, self.carried_child, Void(nx, ny, env)
+    
     def drop(self):
         if not self.carried_child:
             print('CALL TO DROP ON ROBOT WITH NO CARRIED CHILD')
@@ -360,6 +378,9 @@ class ProactiveAgent(MySmartAgent):
         self.change_behaviour = False
 
     def perform_action(self, env_info):
+        if self.carried_child:
+            foo = 0
+
         dirty_cells = env_info['dirty-cells']
         void_cells = env_info['void-cells']
         children = env_info['children']

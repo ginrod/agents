@@ -93,7 +93,7 @@ def children_in_play_pen(env):
     count = 0
     for line in env:
         for _, play_pen_pos, child_pos in line:
-            if isinstance(child_pos, Child) and isinstance(play_pen_pos, PlayPen):
+            if isinstance(child_pos, Child) and isinstance(play_pen_pos, Playpen):
                 count += 1
     
     return count
