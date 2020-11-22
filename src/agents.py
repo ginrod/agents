@@ -185,17 +185,27 @@ class Objective:
                     if inside(env, nx, ny) and not match_types(env[nx][ny], obstacles):
                         return nx, ny
             
-            return blocked_pos
+            dx, dy = deterimine_direction(blocked_pos, robot)
+            # to leave the direction in unit when target blocked pos is 2 cells from robot
+            dx, dy = dx and dx // abs(dx), dy and dy // abs(dy)
+            path = []
+            curr_x, curr_y = blocked_pos
+            while curr_x, curr_y != robot_pos:
+                path.append((curr_x, curr_y))
+                curr_x, curr_y = curr_x + dx, curr_y + dy
+            path.append(robot_pos)
+
+            return path
 
         def perform(env, robot, env_info):
-            pos = find(env, robot, env_info)
+            path = find(env, robot, env_info)
             robot_pos = robot.x, robot.y
             blocked_pos = env_info['blocked-position']
             if robot_pos != blocked_pos and robot.carried_child:
                 robot.drop()
-            elif robot_pos != blocked_pos:
-                robot.move(pos, env_info)
-            else:
+            elif len(path) > 1:
+                robot.move(path[1], env_info)
+            elif robot_pos == blocked_pos and isinstance(env[robot.x][robot.y][1], Dirt):
                 robot.clean(pos)
         
         def check_if_completed(objective, env, robot, env_info):
