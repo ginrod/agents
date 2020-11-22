@@ -257,8 +257,12 @@ class MySmartAgent(Agent):
         nx, ny = new_pos
         # Move to new_pos position
         x, y = self.x, self.y
-        env[x][y] = Void(x, y), Void(x, y), Void(x, y)
         self.x, self.y = nx, ny
+        
+        if isinstance(env[nx][ny][1], Void):
+            env[x][y] = Void(x, y), Void(x, y), Void(x, y)
+        else:
+            env[x][y] = Void(x, y), env[nx][ny][1], env[nx][ny][2]
 
         if isinstance(env[nx][ny][1], Void):
             env[nx][ny] = Void(nx, ny), self, Void(nx, ny)
