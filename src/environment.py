@@ -6,11 +6,7 @@ def build_path(start, end, pi):
     path, curr = [], end
     while curr != start:
         path.append(curr)
-        try:
-            curr = pi[curr]
-        except:
-            foo = 0
-            break
+        curr = pi[curr]
     path.append(start)
     path.reverse()
 
