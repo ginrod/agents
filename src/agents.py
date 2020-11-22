@@ -259,10 +259,17 @@ class MySmartAgent(Agent):
         x, y = self.x, self.y
         self.x, self.y = nx, ny
         
-        if isinstance(env[nx][ny][1], Void):
+        if isinstance(env[x][y][1], Agent):
             env[x][y] = Void(x, y), Void(x, y), Void(x, y)
         else:
-            env[x][y] = Void(x, y), env[nx][ny][1], env[nx][ny][2]
+            if not self.carried_child:
+                env[x][y] = Void(x, y), env[x][y][1], env[x][y][2]
+            else:
+                _, child_in_pos1, child_in_pos2 = env[x][y]
+                if isinstance(child_in_pos2, Child):
+                    env[x][y] = Void(x, y), env[x][y][1], Void(x, y)
+                else:
+                    env[x][y] = Void(x, y), Void(x, y), Void(x, y)
 
         if isinstance(env[nx][ny][1], Void):
             env[nx][ny] = Void(nx, ny), self, Void(nx, ny)

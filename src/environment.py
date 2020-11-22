@@ -212,6 +212,9 @@ def random_change(env, robot, children):
     
     # Clear dirts
     dirts_positions = get_element_pos(env, Dirt)
+    if (robot.x, robot.y) in dirts_positions:
+        dirts_positions.remove((robot.x, robot.y))
+
     clear_positions(env, dirts_positions)
 
     free_cells_positions = get_element_pos(env, Void)
