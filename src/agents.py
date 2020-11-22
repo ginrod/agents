@@ -14,9 +14,12 @@ class Objective:
             closest_dirt_pos = -1, -1
             for x in range(rows):
                 for y in range(cols):
-                    if isinstance(env[x][y][1], Dirt) and visit[x][y] < closest_path_dirt_len:
+                    if isinstance(env[x][y][1], Dirt) and visit[x][y] != 0 and visit[x][y] < closest_path_dirt_len:
                         closest_path_dirt_len = visit[x][y]
                         closest_dirt_pos = x, y
+            
+            if isinstance(env[robot.x][robot.y][1], Dirt):
+                closest_dirt_pos = robot.x, robot.y
             
             if closest_dirt_pos == (-1, -1):
                 return [robot_pos]
@@ -63,9 +66,12 @@ class Objective:
             closest_dirt_pos = -1, -1
             for x in range(rows):
                 for y in range(cols):
-                    if isinstance(env[x][y][1], Dirt) and visit[x][y] < closest_path_dirt_len:
+                    if isinstance(env[x][y][1], Dirt) and visit[x][y] != 0 and visit[x][y] < closest_path_dirt_len:
                         closest_path_dirt_len = visit[x][y]
                         closest_dirt_pos = x, y
+            
+            if isinstance(env[robot.x][robot.y][1], Dirt):
+                closest_dirt_pos = robot.x, robot.y
             
             if closest_dirt_pos == (-1, -1):
                 return [robot_pos]
@@ -117,9 +123,12 @@ class Objective:
             closest_child_pos = 0, 0
             for x in range(rows):
                 for y in range(cols):
-                    if isinstance(env[x][y][1], Child) and visit[x][y] < closest_path_child_len:
+                    if isinstance(env[x][y][1], Child) and visit[x][y] != 0 and visit[x][y] < closest_path_child_len:
                         closest_path_child_len = visit[x][y]
                         closest_child_pos = x, y
+            
+            if isinstance(env[robot.x][robot.y][1], Child):
+                closest_child_pos = robot.x, robot.y
             
             if closest_child_pos == (-1, -1):
                 return [robot_pos]
@@ -138,10 +147,13 @@ class Objective:
 
             for x in range(rows):
                 for y in range(cols):
-                    if isinstance(env[x][y][1], Playpen) and visit[x][y] < closest_path_playpen_len and \
+                    if isinstance(env[x][y][1], Playpen) and visit[x][y] != 0 and visit[x][y] < closest_path_playpen_len and \
                         (in_play_pen == len(children) - 1 or not creates_a_barrier(env, (x,y))):
                         closest_path_playpen_len = visit[x][y]
                         closest_playpen_pos = x, y
+            
+            if isinstance(env[robot.x][robot.y][1], Playpen):
+                closest_playpen_pos = robot.x, robot.y
             
             return build_path(robot_pos, closest_playpen_pos, pi)
         
@@ -326,7 +338,7 @@ class MySmartAgent(Agent):
 
         for x in range(rows):
             for y in range(cols):
-                if match_types(env[x][y], objectives_targets) and visit[x][y] < closest_path_len:
+                if match_types(env[x][y], objectives_targets) and visit[x][y] != 0 and visit[x][y] < closest_path_len:
                     closest_path_len = visit[x][y]
                     closest_target_pos = x, y
         
