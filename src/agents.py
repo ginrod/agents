@@ -291,7 +291,8 @@ class MySmartAgent(Agent):
         
         if self.carried_child and not match_types(self.env[nx][ny], void):
             # trigger clear-block objective
-            self.trigger_clear_block_objective((nx, ny))
+            env_info['blocked-position'] = nx, ny
+            self.trigger_clear_block_objective(env_info)
         else:
             if self.carried_child:
                 self.carried_child.x, self.carried_child.y = nx, ny
