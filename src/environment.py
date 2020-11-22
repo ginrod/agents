@@ -239,7 +239,7 @@ def random_change(env, robot, children):
                 continue
         
         # Relocating children
-        for child in range(children_to_be_relocated):
+        for child in children_to_be_relocated:
             idx = random.randint(0, len(free_cells) - 1)
             x, y = free_cells[idx]
             child.x, child.y = x, y
