@@ -206,10 +206,6 @@ if __name__ == '__main__':
         for e_num, env_info in enumerate(environments):
             env, (rx, ry) = env_info # env and robot position
             env = copy_env(env) # use a copy of the env to keep the initial one
-            robot = get_robot(env)
-
-            if robot != None:
-                foo = 0
 
             env[rx][ry] = (Void(rx, ry, env), agent(rx, ry, env), Void(rx, ry, env))
 
