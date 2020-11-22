@@ -190,6 +190,7 @@ class Objective:
         def perform(env, robot, env_info):
             pos = find(env, robot, env_info)
             robot_pos = robot.x, robot.y
+            blocked_pos = env_info['blocked-position']
             if robot_pos != blocked_pos and robot.carried_child:
                 robot.drop()
             elif robot_pos != blocked_pos:
