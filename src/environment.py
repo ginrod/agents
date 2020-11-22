@@ -148,11 +148,11 @@ def creates_horizontal_barrier(env, pos):
 def creates_a_barrier(env, pos, robot_pos):
     # Check if puting a child in pos (sx, sy) creates a barrier of obstacles (vertical or horizontal)
     # considering a playpen with a child an obstacle for a robot carring another child
-    # creates_full_barrier = creates_vertical_barrier(env, pos) or creates_horizontal_barrier(env, pos)
+    creates_full_barrier = creates_vertical_barrier(env, pos) or creates_horizontal_barrier(env, pos)
 
-    walk_obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
-    pi, _ = find_paths(env, robot_pos, obstacles=walk_obstacles)
-    playpen_cells = get_element_pos(env, Playpen)
+    # walk_obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
+    # pi, _ = find_paths(env, robot_pos, obstacles=walk_obstacles)
+    # playpen_cells = get_element_pos(env, Playpen)
 
     # any_isolated_playpen_cell = any(map(lambda playpen_pos: playpen_pos not in pi, playpen_cells))
 
