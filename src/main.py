@@ -104,10 +104,8 @@ def create_initial_environment():
     return env, (robotX, robotY)
 
 def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
-    # register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=False)
-    register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=True)
-    # register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
-    register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=True)
+    register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=False)
+    register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
     rows, cols = len(env), len(env[0])
 
     t0 = 1
@@ -150,8 +148,7 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
             register_msg(f'#Turno {t0} de variación aleatoria', file, print_to_file, print_to_console=False)
             random_change(env, robot, children)
 
-        # register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
-        register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=True)
+        register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
 
         dirty_cells, void_cells = count_dirty_cells(env), count_void_cells(env)
         env_info['dirty-cells'], env_info['void-cells'] = dirty_cells, void_cells
@@ -177,7 +174,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--time', type=int, default=40)
+    parser.add_argument('-t', '--time', type=int, default=10)
     # parser.add_argument('-i', '--iter', type=int, default=30)
     parser.add_argument('-i', '--iter', type=int, default=1)
     # parser.add_argument('-p', '--print-to-file', type=bool, default=False)
@@ -195,6 +192,8 @@ if __name__ == '__main__':
     sim_stats = {}
     for agent in ['ProactiveAgent', 'ReactiveAgent']:
         sim_stats[agent] = { 'fired': 0, 'finish': 0, 'time': 0 }
+    
+    random.seed("seed")
 
     sim_num = 1
     environments = [create_initial_environment() for _ in range(10)]
