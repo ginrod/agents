@@ -361,6 +361,10 @@ class MySmartAgent(Agent):
                     closest_path_len = visit[x][y]
                     closest_target_pos = x, y
         
+        rx, ry = robot_pos
+        if isinstance(env[rx][ry][1], Playpen) and self.carried_child or isinstance(env[rx][ry][1], Dirt):
+            closest_target_pos = rx, ry
+        
         tx, ty = closest_target_pos
         target = env[tx][ty][1]
         objectives_name = isinstance(target, Dirt) and 'clean' or 'bring-children-to-playpen'
