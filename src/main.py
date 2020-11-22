@@ -104,7 +104,7 @@ def create_initial_environment():
     return env, (robotX, robotY)
 
 def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}, sim_num=None, env_num=None, robot_num=None):
-    if sim_num == 1 and env_num == 1 and robot_num == 0:
+    if sim_num == 2 and env_num == 2 and robot_num == 0:
         foo = 0
 
     # register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=False)
@@ -116,16 +116,17 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}, sim_num=N
     t0 = 1
     dirty_cells, void_cells = count_dirty_cells(env), count_void_cells(env)
     children, robot = get_children(env), get_robot(env)
-    env_info = { 'dirty-cells': dirty_cells, 'void-cells': void_cells, 'children': children }
+    in_play_pen = children_in_play_pen(env)
+    env_info = { 'dirty-cells': dirty_cells, 'void-cells': void_cells, 'children': children, 'in-play-pen': in_play_pen }
 
     while t0 <= 100 * t:
-        if sim_num == 1 and env_num == 1 and robot_num == 0 and t0 == 18:
+        if sim_num == 11 and t0 == 3:
             foo = 0
 
         if dirty_cells >= 0.6 * (void_cells + dirty_cells):
             break
 
-        if children_in_play_pen(env) == len(children) and dirty_cells == 0:
+        if in_play_pen == len(children) and dirty_cells == 0:
             break
 
         # register_msg(f'#Turno {t0}', file, print_to_file, print_to_console=False)
@@ -156,14 +157,14 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}, sim_num=N
 
         # Performe a random environment change
         if t0 % t == 0:
-            register_msg(f'#Turno {t0} de variación aleatoria', file, print_to_file, print_to_console=False)
+            register_msg(' (de variación aleatoria)', file, print_to_file, print_to_console=False)
             random_change(env, robot, children)
 
         # register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
         register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=True)
 
-        dirty_cells, void_cells = count_dirty_cells(env), count_void_cells(env)
-        env_info['dirty-cells'], env_info['void-cells'] = dirty_cells, void_cells
+        dirty_cells, void_cells, in_play_pen = count_dirty_cells(env), count_void_cells(env), children_in_play_pen(env)
+        env_info['dirty-cells'], env_info['void-cells'], env_info['in-play-pen'] = dirty_cells, void_cells, in_play_pen
 
         t0 += 1
     

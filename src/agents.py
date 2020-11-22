@@ -222,11 +222,13 @@ class Objective:
                 robot.move(path[1], env, env_info)
             elif robot_pos == blocked_pos and isinstance(env[robot.x][robot.y][1], Dirt):
                 robot.clean(env)
+            
+
         
         def check_if_completed(objective, env, robot, env_info):
             bx, by = env_info['blocked-position']
 
-            return isinstance(env[bx][by][1], Void) or \
+            return isinstance(env[bx][by][1], (Void, Agent)) or \
                   (isinstance(env[bx][by][1], Playpen) and isinstance(env[bx][by][2], Void))
 
         return Objective(find, perform, check_if_completed, name="clear-block")
@@ -258,18 +260,21 @@ class MySmartAgent(Agent):
         # Move to new_pos position
         x, y = self.x, self.y
         self.x, self.y = nx, ny
+        o1, o2, o3 = env[x][y]
         
-        if isinstance(env[x][y][1], Agent):
-            env[x][y] = Void(x, y), Void(x, y), Void(x, y)
+        if o1 == self:
+            env[x][y] = Void(x, y), o2, o3
+        elif o2 == self:
+            env[x][y] = Void(x, y), o1, o3
         else:
-            if not self.carried_child:
-                env[x][y] = Void(x, y), env[x][y][1], env[x][y][2]
+            env[x][y] = o1, o2, Void(x, y)
+
+        if self.carried_child:
+            _, child_in_pos1, child_in_pos2 = env[x][y]
+            if isinstance(child_in_pos2, Child):
+                env[x][y] = Void(x, y), env[x][y][1], Void(x, y)
             else:
-                _, child_in_pos1, child_in_pos2 = env[x][y]
-                if isinstance(child_in_pos2, Child):
-                    env[x][y] = Void(x, y), env[x][y][1], Void(x, y)
-                else:
-                    env[x][y] = Void(x, y), Void(x, y), Void(x, y)
+                env[x][y] = Void(x, y), Void(x, y), Void(x, y)
 
         if isinstance(env[nx][ny][1], Void):
             env[nx][ny] = Void(nx, ny), self, Void(nx, ny)
@@ -293,8 +298,15 @@ class MySmartAgent(Agent):
         nx, ny = new_pos
         # Move to new_pos position
         x, y = self.x, self.y
-        env[x][y] = Void(x, y), Void(x, y), Void(x, y)
         self.x, self.y = nx, ny
+        o1, o2, o3 = env[x][y]
+        
+        if o1 == self:
+            env[x][y] = Void(x, y), o2, o3
+        elif o2 == self:
+            env[x][y] = Void(x, y), o1, o3
+        else:
+            env[x][y] = o1, o2, Void(x, y)
 
         _, child_in_pos1, child_in_pos2 = env[nx][ny]
 
@@ -357,14 +369,14 @@ class MySmartAgent(Agent):
         robot = env[x][y][0]
         env[x][y] = (Void(x, y), robot, Void(x, y))
 
-    def get_closest_objective(self, env, pi, visit):
+    def get_closest_objective(self, env, pi, visit, objectives_targets=None):
         robot_pos = self.x, self.y
         rows, cols = len(env), len(env[0])
 
         closest_path_len = rows * cols
         closest_target_pos = -1, -1
-        objectives_targets = self.carried_child and ((Void, Playpen, Void), (Void, Dirt, Void)) or \
-                             ((Void, Child, Void), (Void, Dirt, Void))
+        objectives_targets = objectives_targets or (self.carried_child and \
+            ((Void, Playpen, Void), (Void, Dirt, Void)) or ((Void, Child, Void), (Void, Dirt, Void)))
 
         for x in range(rows):
             for y in range(cols):
@@ -396,6 +408,7 @@ class ProactiveAgent(MySmartAgent):
         dirty_cells = env_info['dirty-cells']
         void_cells = env_info['void-cells']
         children = env_info['children']
+        in_play_pen = env_info['in-play-pen']
         
         active_objective = self.get_active_objective()
 
@@ -436,7 +449,13 @@ class ProactiveAgent(MySmartAgent):
 
         else:
             # Search closest objective
-            closest_objective_name, _ = self.get_closest_objective(env, pi, visit)
+            objective_targets = None
+            if in_play_pen < len(children):
+                objective_targets = self.carried_child and ((Void, Playpen, Void),) or ((Void, Child, Void),)
+            else:
+                objective_targets = ((Void, Dirt, Void),)
+
+            closest_objective_name, _ = self.get_closest_objective(env, pi, visit, objective_targets)
             active_objective = self.objectives[closest_objective_name]
             active_objective.is_in_course = True
             active_objective.perform(env, self, env_info)
@@ -482,7 +501,7 @@ class ReactiveAgent(MySmartAgent):
                 # Search closest objective
                 closest_objective_name, closest_target_pos = self.get_closest_objective(env, pi, visit)
                 if active_objective.name != closest_objective_name:
-                    if not self.change_behaviour:
+                    if not self.change_behaviour and not self.carried_child:
                         self.interrupted_objectives += 1
                         active_objective.is_in_course = False
                         active_objective = self.objectives[closest_objective_name]
