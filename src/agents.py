@@ -25,7 +25,6 @@ class Objective:
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
-            children = env_info['children']
             path = find(env, robot, env_info)
             x, y = robot_pos
 
@@ -75,7 +74,6 @@ class Objective:
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
-            children = env_info['children']
             path = find(env, robot, env_info)
             x, y = robot_pos
 
@@ -153,7 +151,6 @@ class Objective:
 
         def perform(env, robot, env_info):
             robot_pos = robot.x, robot.y
-            children = env_info['children']
             path = find(env, robot, env_info)
             x, y = robot_pos
 
@@ -191,8 +188,7 @@ class Objective:
             return blocked_pos
 
         def perform(env, robot, env_info):
-            blocked_pos = env_info['blocked-position']
-            pos = find(env, robot, blocked_pos)
+            pos = find(env, robot, env_info)
             robot_pos = robot.x, robot.y
             if robot_pos != blocked_pos and robot.carried_child:
                 robot.drop()
