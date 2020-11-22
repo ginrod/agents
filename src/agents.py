@@ -271,12 +271,12 @@ class MySmartAgent(Agent):
     def move(self, new_pos, env_info):
         children = env_info['children']
         nx, ny = new_pos
-        void = ((Void, Void, Void),)
+        availables = ((Void, Void, Void), (Void, Playpen, Void))
 
         for child in children:
             child_pos = child.x, child.y
             if child_pos == new_pos:
-                if self.carried_child and not match_types(self.env[nx][ny], void):
+                if self.carried_child and not match_types(self.env[nx][ny], availables):
                     # trigger clear-block objective
                     env_info['blocked-position'] = nx, ny
                     self.trigger_clear_block_objective(env_info)
@@ -286,7 +286,7 @@ class MySmartAgent(Agent):
                     self._carry_child(new_pos)
                 return
         
-        if self.carried_child and not match_types(self.env[nx][ny], void):
+        if self.carried_child and not match_types(self.env[nx][ny], availables):
             # trigger clear-block objective
             env_info['blocked-position'] = nx, ny
             self.trigger_clear_block_objective(env_info)
@@ -368,6 +368,9 @@ class ProactiveAgent(MySmartAgent):
                         active_objective = self.objectives[closest_objective_name]
                         active_objective.is_in_course = True
                         self.change_behaviour = False
+            
+            if active_objective.name == 'clear-block':
+                foo = 0
 
             active_objective.perform(env, self, env_info)
             completed = active_objective.check_if_completed(active_objective, env, self, env_info)
@@ -428,6 +431,9 @@ class ReactiveAgent(MySmartAgent):
                         active_objective.is_in_course = True
                     else:
                         self.change_behaviour = False
+            
+            if active_objective.name == 'clear-block':
+                foo = 0
 
             active_objective.perform(env, self, env_info)
             completed = active_objective.check_if_completed(active_objective, env, self, env_info)

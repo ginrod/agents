@@ -98,7 +98,8 @@ def create_initial_environment():
     return env, (robotX, robotY)
 
 def run_simulation(env, file, t=50, print_to_file=False):
-    register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=False)
+    # register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=False)
+    register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=True)
     # register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
     register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=True)
     rows, cols = len(env), len(env[0])
@@ -115,7 +116,8 @@ def run_simulation(env, file, t=50, print_to_file=False):
         if children_in_play_pen(env) == len(children) and dirty_cells == 0:
             break
 
-        register_msg(f'#Turno {t0}', file, print_to_file, print_to_console=False)
+        # register_msg(f'#Turno {t0}', file, print_to_file, print_to_console=False)
+        register_msg(f'#Turno {t0}', file, print_to_file, print_to_console=True)
         
         # Performe a robot turn
         robot.perform_action(env_info)
