@@ -196,7 +196,7 @@ def clear_positions(env, positions):
 def random_change(env, robot, children):
     # Clear obstacles
     obstacles_positions = get_element_pos(env, Obstacle)
-    clear_positions(obstacles_positions)
+    clear_positions(env, obstacles_positions)
     
     # Clear positions of alone childs
     children_to_be_relocated = []
@@ -208,7 +208,7 @@ def random_change(env, robot, children):
     
     # Clear dirts
     dirts_positions = get_element_pos(env, Dirt)
-    clear_positions(dirts_positions)
+    clear_positions(env, dirts_positions)
 
     free_cells_positions = get_element_pos(env, Void)
     playpen_cells = get_element_pos(env, Playpen)
