@@ -106,6 +106,7 @@ def run_simulation(env, file, t=50, print_to_file=False):
     t0 = 1
     dirty_cells, void_cells = count_dirty_cells(env), count_void_cells(env)
     children, robot = get_children(env), get_robot(env)
+    env_info = { 'dirty-cells': dirty_cells, 'void-cells': void_cells, 'children': children }
 
     while t0 <= 100 * t:
         if dirty_cells >= 0.6 * (void_cells + dirty_cells):
@@ -117,7 +118,6 @@ def run_simulation(env, file, t=50, print_to_file=False):
         register_msg(f'#Turno {t0}', file, print_to_file, print_to_console=False)
         
         # Performe a robot turn
-        env_info = { 'dirty-cells': dirty_cells, 'void-cells': void_cells, 'children': children }
         robot.perform_action(env_info)
 
         # Performe an environment change
@@ -142,7 +142,9 @@ def run_simulation(env, file, t=50, print_to_file=False):
         # register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
         register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=True)
 
-        dirty_cells = count_dirty_cells(env)
+        dirty_cells, void_cells = count_dirty_cells(env), count_void_cells(env)
+        env_info['dirty-cells'], env_info['void-cells'] = dirty_cells, void_cells
+
         t0 += 1
     
     if t0 == 100 * t + 1:
