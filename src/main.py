@@ -103,9 +103,14 @@ def create_initial_environment():
 
     return env, (robotX, robotY)
 
-def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
-    register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=False)
-    register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}, sim_num=None, env_num=None, robot_num=None):
+    if sim_num == 1 and env_num == 1 and robot_num == 0:
+        foo = 0
+
+    # register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=False)
+    register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=True)
+    # register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+    register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=True)
     rows, cols = len(env), len(env[0])
 
     t0 = 1
@@ -114,6 +119,9 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
     env_info = { 'dirty-cells': dirty_cells, 'void-cells': void_cells, 'children': children }
 
     while t0 <= 100 * t:
+        if sim_num == 1 and env_num == 1 and robot_num == 0 and t0 == 18:
+            foo = 0
+
         if dirty_cells >= 0.6 * (void_cells + dirty_cells):
             break
 
@@ -131,6 +139,9 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
         children_in_grid_dic = { grid : children_in_grid(env, grid) for grid in all_grids}
 
         for child in children:
+            if child.num == 4:
+                foo = 0
+
             if child == robot.carried_child:
                 continue
             
@@ -148,7 +159,8 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
             register_msg(f'#Turno {t0} de variación aleatoria', file, print_to_file, print_to_console=False)
             random_change(env, robot, children)
 
-        register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+        # register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+        register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=True)
 
         dirty_cells, void_cells = count_dirty_cells(env), count_void_cells(env)
         env_info['dirty-cells'], env_info['void-cells'] = dirty_cells, void_cells
@@ -167,8 +179,16 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
         register_msg(f'\nLa simulación terminó porque el robot logró poner a los niños en el corral y limpiar la casa\n\n', file, print_to_file=True)
         sim_stats[robot_type]['finish'] += 1
 
-def copy_env(env):
-    return [list(line) for line in env]
+def clone_env(env):
+    rows, cols = len(env), len(env[0])
+    cloned_env = [[None for _ in range(cols)] for _ in range(rows)]
+
+    for x in range(rows):
+        for y in range(cols):
+            o1, o2, o3 = env[x][y]
+            cloned_env[x][y] = o1.clone(), o2.clone(), o3.clone()
+    
+    return cloned_env
 
 if __name__ == '__main__':
     import argparse
@@ -199,8 +219,13 @@ if __name__ == '__main__':
     environments = [create_initial_environment() for _ in range(10)]
     for r_num, agent in enumerate(agents):
         for e_num, env_info in enumerate(environments):
+            if sim_num == 12 and e_num + 1 == 2 and r_num == 1:
+                foo = 0
+                env, (rx, ry) = env_info # env and robot position
+                o1, o2 = env[7][2], env[7][3]
+
             env, (rx, ry) = env_info # env and robot position
-            env = copy_env(env) # use a copy of the env to keep the initial one
+            env = clone_env(env) # use a clone of the env to keep the initial one
 
             env[rx][ry] = (Void(rx, ry), agent(rx, ry), Void(rx, ry))
 
@@ -208,7 +233,7 @@ if __name__ == '__main__':
                 register_msg(f"#Simulacion {sim_num}\n", file, print_to_file=True)
                 register_msg(f"#Robot de tipo {r_num}\n", file, print_to_file=True)
                 register_msg(f"#Ambiente {e_num + 1}", file, print_to_file=True)
-                run_simulation(env, file, t, print_to_file, sim_stats)
+                run_simulation(env, file, t, print_to_file, sim_stats, sim_num, e_num + 1, r_num)
                 sim_num += 1
     
     for agent, stats in sim_stats.items():

@@ -54,8 +54,16 @@ class EnvironmentElement:
         nx, ny = new_pos
         # Move to new_pos position
         x, y = self.x, self.y
-        env[x][y] = Void(x, y), Void(x, y), Void(x, y)
         self.x, self.y = nx, ny
+
+        # env[x][y] = Void(x, y), Void(x, y), Void(x, y)
+        o1, o2, o3 = env[x][y]
+        if o1 == self:
+            env[x][y] = Void(x, y), o2, o3
+        elif o2 == self:
+            env[x][y] = Void(x, y), o1, o3
+        else:
+            env[x][y] = o1, o2, Void(x, y)
 
         if isinstance(env[nx][ny][1], Void):
             env[nx][ny] = Void(nx, ny), self, Void(nx, ny)
