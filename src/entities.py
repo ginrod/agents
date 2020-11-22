@@ -46,7 +46,10 @@ class EnvironmentElement:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        
+
+    def clone(self):
+        return EnvironmentElement(self.x, self.y)
+
     def _move(self, new_pos, env):
         nx, ny = new_pos
         # Move to new_pos position
@@ -69,14 +72,25 @@ class Agent(EnvironmentElement):
 class Void(EnvironmentElement):
     def __str__(self):
         return '   '
+    
+    def clone(self):
+        return Void(self.x, self.y)
 
 class Obstacle(EnvironmentElement):
     def __str__(self):
         return ' O '
+    
+    def clone(self):
+        return Obstacle(self.x, self.y)
 
     def push(self, direction, env):
         dx, dy = direction
         nx, ny = self.x + dx, self.y + dy
+
+        for x in range(len(env)):
+            for y in range(len(env[0])):
+                if env[x][y][1] == self:
+                    foo = 0
 
         if not inside(env, nx, ny): return
         
@@ -93,12 +107,25 @@ class Obstacle(EnvironmentElement):
 class Dirt(EnvironmentElement):
     def __str__(self):
         return ' D '
+    
+    def clone(self):
+        return Dirt(self.x, self.y)
 
 class Playpen(EnvironmentElement):
     def __str__(self):
         return ' P '
+    
+    def clone(self):
+        return Playpen(self.x, self.y)
 
 class Child(EnvironmentElement):
+    def __init__(self, x, y, num=None):
+        super(Child, self).__init__(x, y)
+        self.num = num
+    
+    def clone(self):
+        return Child(self.x, self.y, self.num)
+
     def __str__(self):
         return self.num < 10 and f'C0{self.num}' or f'C{self.num}'
 
