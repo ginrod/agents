@@ -129,11 +129,7 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}):
         robot.perform_action(env_info)
 
         # Performe an environment change
-        all_grids = set()
-        for child in children:
-            curr_grids = child.get_3x3_grids_containing_child()
-            all_grids |= curr_grids
-        
+        all_grids = get_3x3_grids(env)
         children_in_grid_dic = { grid : children_in_grid(env, grid) for grid in all_grids}
 
         for child in children:
@@ -181,7 +177,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--time', type=int, default=50)
+    parser.add_argument('-t', '--time', type=int, default=40)
     # parser.add_argument('-i', '--iter', type=int, default=30)
     parser.add_argument('-i', '--iter', type=int, default=1)
     # parser.add_argument('-p', '--print-to-file', type=bool, default=False)

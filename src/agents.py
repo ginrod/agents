@@ -191,18 +191,19 @@ class Objective:
         def find(env, robot, env_info):
             blocked_pos = env_info['blocked-position']
             robot_pos = robot.x, robot.y
+            new_pos = blocked_pos
             if robot_pos == blocked_pos and robot.carried_child:
                 obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
                 for dx, dy in directions:
                     nx, ny = robot.x + dx, robot.y + dy
                     if inside(env, nx, ny) and not match_types(env[nx][ny], obstacles):
-                        return nx, ny
+                        new_pos = nx, ny
             
-            dx, dy = deterimine_direction(blocked_pos, robot_pos)
+            dx, dy = deterimine_direction(new_pos, robot_pos)
             # to leave the direction in unit when target blocked pos is 2 cells from robot
             dx, dy = dx and dx // abs(dx), dy and dy // abs(dy)
             path = []
-            curr_x, curr_y = blocked_pos
+            curr_x, curr_y = new_pos
             while (curr_x, curr_y) != robot_pos:
                 path.append((curr_x, curr_y))
                 curr_x, curr_y = curr_x + dx, curr_y + dy

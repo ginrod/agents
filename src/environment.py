@@ -273,3 +273,13 @@ def deterimine_direction(pos1, pos2):
     x2, y2 = pos2
     
     return x2 - x1, y2 - y1
+
+def get_3x3_grids(env):
+    rows, cols = len(env), len(env[0])
+    result = []
+    for x in range(0, rows, 3):
+        for y in range(0, cols, 3):
+            if inside(env, x + 2, y + 2):
+                result.append((x, y))
+    
+    return result
