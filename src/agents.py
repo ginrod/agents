@@ -185,15 +185,16 @@ class Objective:
                     if inside(env, nx, ny) and not match_types(env[nx][ny], obstacles):
                         return nx, ny
             
-            dx, dy = deterimine_direction(blocked_pos, robot)
+            dx, dy = deterimine_direction(blocked_pos, robot_pos)
             # to leave the direction in unit when target blocked pos is 2 cells from robot
             dx, dy = dx and dx // abs(dx), dy and dy // abs(dy)
             path = []
             curr_x, curr_y = blocked_pos
-            while curr_x, curr_y != robot_pos:
+            while (curr_x, curr_y) != robot_pos:
                 path.append((curr_x, curr_y))
                 curr_x, curr_y = curr_x + dx, curr_y + dy
             path.append(robot_pos)
+            path.reverse()
 
             return path
 
@@ -379,9 +380,6 @@ class ProactiveAgent(MySmartAgent):
                         active_objective.is_in_course = True
                         self.change_behaviour = False
             
-            if active_objective.name == 'clear-block':
-                foo = 0
-
             active_objective.perform(env, self, env_info)
             completed = active_objective.check_if_completed(active_objective, env, self, env_info)
 
@@ -406,7 +404,7 @@ class ReactiveAgent(MySmartAgent):
         super(ReactiveAgent, self).__init__(x, y, env)
         self.interrupted_objectives = 0
         self.interrupted_objectives_limit = interrupted_objectives_limit
-        self.change_behaviour = Falseinterrupted_objectives_limit
+        self.change_behaviour = False
 
     def perform_action(self, env_info):
         dirty_cells = env_info['dirty-cells']
@@ -442,9 +440,6 @@ class ReactiveAgent(MySmartAgent):
                     else:
                         self.change_behaviour = False
             
-            if active_objective.name == 'clear-block':
-                foo = 0
-
             active_objective.perform(env, self, env_info)
             completed = active_objective.check_if_completed(active_objective, env, self, env_info)
 

@@ -131,6 +131,13 @@ def run_simulation(env, file, t=50, print_to_file=False):
         children_in_grid_dic = { grid : children_in_grid(env, grid) for grid in all_grids}
 
         for child in children:
+            if child == robot.carried_child:
+                continue
+            
+            x, y = child.x, child.y
+            if isinstance(env[x][y][1], Playpen):
+                continue
+
             child.react()
         
         for grid_left_corner in all_grids:
