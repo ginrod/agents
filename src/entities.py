@@ -46,8 +46,7 @@ class EnvironmentElement:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        env = env
-    
+        
     def _move(self, new_pos, env):
         nx, ny = new_pos
         # Move to new_pos position

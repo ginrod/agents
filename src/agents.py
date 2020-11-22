@@ -32,7 +32,7 @@ class Objective:
             x, y = robot_pos
 
             if len(path) == 1:
-                robot.clean()
+                robot.clean(env)
                 return
             
             if robot.carried_child: 
@@ -84,7 +84,7 @@ class Objective:
             x, y = robot_pos
 
             if len(path) == 1:
-                robot.clean()
+                robot.clean(env)
                 return
             
             if robot.carried_child: 
@@ -221,7 +221,7 @@ class Objective:
             elif len(path) > 1:
                 robot.move(path[1], env, env_info)
             elif robot_pos == blocked_pos and isinstance(env[robot.x][robot.y][1], Dirt):
-                robot.clean()
+                robot.clean(env)
         
         def check_if_completed(objective, env, robot, env_info):
             bx, by = env_info['blocked-position']
@@ -257,6 +257,7 @@ class MySmartAgent(Agent):
         nx, ny = new_pos
         # Move to new_pos position
         x, y = self.x, self.y
+        env[x][y] = Void(x, y), Void(x, y), Void(x, y)
         self.x, self.y = nx, ny
 
         if isinstance(env[nx][ny][1], Void):
@@ -340,13 +341,13 @@ class MySmartAgent(Agent):
     def check_dirty_alert(self, void_cells, dirty_cells):
         return dirty_cells >= 0.55 * (void_cells + dirty_cells)
     
-    def clean(self):
-        x, y, env = self.x, self.y, env
+    def clean(self, env):
+        x, y = self.x, self.y
         robot = env[x][y][0]
         env[x][y] = (Void(x, y), robot, Void(x, y))
 
-    def get_closest_objective(self, pi, visit):
-        robot_pos, env = (self.x, self.y), env
+    def get_closest_objective(self, env, pi, visit):
+        robot_pos = self.x, self.y
         rows, cols = len(env), len(env[0])
 
         closest_path_len = rows * cols
@@ -370,20 +371,17 @@ class MySmartAgent(Agent):
         
         return objectives_name, closest_target_pos
 
-    def perform_action(self, env_info):
+    def perform_action(self, env, env_info):
         raise NotImplementedError
 
 class ProactiveAgent(MySmartAgent):
-    def __init__(self, x, y, env, ignored_objectives_limit=20):
+    def __init__(self, x, y, ignored_objectives_limit=20):
         super(ProactiveAgent, self).__init__(x, y)
         self.ignored_objectives = 0
         self.ignored_objectives_limit = ignored_objectives_limit
         self.change_behaviour = False
 
-    def perform_action(self, env_info):
-        if self.carried_child:
-            foo = 0
-
+    def perform_action(self, env, env_info):
         dirty_cells = env_info['dirty-cells']
         void_cells = env_info['void-cells']
         children = env_info['children']
@@ -401,14 +399,14 @@ class ProactiveAgent(MySmartAgent):
             self.objectives['dirty-alert'].is_in_course = True
 
         
-        robot_pos, env = (self.x, self.y), env
+        robot_pos = self.x, self.y
         obstacles = ((Void, Obstacle, Void),)
         pi, visit = find_paths(env, robot_pos, obstacles)
 
         if active_objective:
             if active_objective.name not in ['clear-block', 'dirty-alert']:
                 # Search closest objective
-                closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
+                closest_objective_name, closest_target_pos = self.get_closest_objective(env, pi, visit)
                 if active_objective.name != closest_objective_name:
                     if not self.change_behaviour:
                         self.ignored_objectives += 1
@@ -427,7 +425,7 @@ class ProactiveAgent(MySmartAgent):
 
         else:
             # Search closest objective
-            closest_objective_name, _ = self.get_closest_objective(pi, visit)
+            closest_objective_name, _ = self.get_closest_objective(env, pi, visit)
             active_objective = self.objectives[closest_objective_name]
             active_objective.is_in_course = True
             active_objective.perform(env, self, env_info)
@@ -438,7 +436,7 @@ class ProactiveAgent(MySmartAgent):
                 self.ignored_objectives = 0
 
 class ReactiveAgent(MySmartAgent):
-    def __init__(self, x, y, env, interrupted_objectives_limit=10):
+    def __init__(self, x, y, interrupted_objectives_limit=10):
         super(ReactiveAgent, self).__init__(x, y)
         self.interrupted_objectives = 0
         self.interrupted_objectives_limit = interrupted_objectives_limit
@@ -447,7 +445,7 @@ class ReactiveAgent(MySmartAgent):
     def __name__(self):
         return 'ReactiveAgent'
 
-    def perform_action(self, env_info):
+    def perform_action(self, env, env_info):
         dirty_cells = env_info['dirty-cells']
         void_cells = env_info['void-cells']
         children = env_info['children']
@@ -464,14 +462,14 @@ class ReactiveAgent(MySmartAgent):
             
             self.objectives['dirty-alert'].is_in_course = True
         
-        robot_pos, env = (self.x, self.y), env
+        robot_pos = self.x, self.y
         obstacles = ((Void, Obstacle, Void),)
         pi, visit = find_paths(env, robot_pos, obstacles)
 
         if active_objective:
             if active_objective.name not in ['clear-block', 'dirty-alert']:
                 # Search closest objective
-                closest_objective_name, closest_target_pos = self.get_closest_objective(pi, visit)
+                closest_objective_name, closest_target_pos = self.get_closest_objective(env, pi, visit)
                 if active_objective.name != closest_objective_name:
                     if not self.change_behaviour:
                         self.interrupted_objectives += 1
@@ -489,7 +487,7 @@ class ReactiveAgent(MySmartAgent):
                 self.interrupted_objectives = 0
         else:
             # Search closest objective
-            closest_objective_name, _ = self.get_closest_objective(pi, visit)
+            closest_objective_name, _ = self.get_closest_objective(env, pi, visit)
             active_objective = self.objectives[closest_objective_name]
             active_objective.is_in_course = True
             active_objective.perform(env, self, env_info)
