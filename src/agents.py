@@ -179,7 +179,7 @@ class Objective:
     @staticmethod
     def build_clear_block_objective():
         def find(env, robot, env_info):
-            blocked_pos = env_info['blocked-pos']
+            blocked_pos = env_info['blocked-position']
             robot_pos = robot.x, robot.y
             if robot_pos == blocked_pos and robot.carried_child:
                 obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
@@ -191,7 +191,7 @@ class Objective:
             return blocked_pos
 
         def perform(env, robot, env_info):
-            blocked_pos = env_info['blocked-pos']
+            blocked_pos = env_info['blocked-position']
             pos = find(env, robot, blocked_pos)
             robot_pos = robot.x, robot.y
             if robot_pos != blocked_pos and robot.carried_child:
@@ -202,7 +202,7 @@ class Objective:
                 robot.clean(pos)
         
         def check_if_completed(objective, env, robot, env_info):
-            bx, by = env_info['blocked-pos']
+            bx, by = env_info['blocked-position']
 
             return isinstance(env[bx][by][1], Void) or \
                   (isinstance(env[bx][by][1], Playpen) and isinstance(env[bx][by][2], Void))
