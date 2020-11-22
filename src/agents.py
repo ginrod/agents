@@ -120,7 +120,7 @@ class Objective:
             pi, visit  = find_paths(env, robot_pos, obstacles)
 
             closest_path_child_len = rows * cols
-            closest_child_pos = 0, 0
+            closest_child_pos = -1, -1
             for x in range(rows):
                 for y in range(cols):
                     if isinstance(env[x][y][1], Child) and visit[x][y] != 0 and visit[x][y] < closest_path_child_len:
@@ -142,13 +142,13 @@ class Objective:
             pi, visit  = find_paths(env, robot_pos, obstacles)
 
             closest_path_playpen_len = rows * cols
-            closest_playpen_pos = 0, 0
+            closest_playpen_pos = -1, -1
             in_play_pen = children_in_play_pen(env)
 
             for x in range(rows):
                 for y in range(cols):
                     if isinstance(env[x][y][1], Playpen) and visit[x][y] != 0 and visit[x][y] < closest_path_playpen_len and \
-                        (in_play_pen == len(children) - 1 or not creates_a_barrier(env, (x,y))):
+                        (in_play_pen == len(children) - 1 or not creates_a_barrier(env, (x,y), robot_pos)):
                         closest_path_playpen_len = visit[x][y]
                         closest_playpen_pos = x, y
             

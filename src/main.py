@@ -120,7 +120,7 @@ def run_simulation(env, file, t=50, print_to_file=False, sim_stats={}, sim_num=N
     env_info = { 'dirty-cells': dirty_cells, 'void-cells': void_cells, 'children': children, 'in-play-pen': in_play_pen }
 
     while t0 <= 100 * t:
-        if sim_num == 11 and t0 == 3:
+        if sim_num == 4 and t0 == 8:
             foo = 0
 
         if dirty_cells >= 0.6 * (void_cells + dirty_cells):
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--time', type=int, default=10)
+    parser.add_argument('-t', '--time', type=int, default=20)
     # parser.add_argument('-i', '--iter', type=int, default=30)
     parser.add_argument('-i', '--iter', type=int, default=1)
     # parser.add_argument('-p', '--print-to-file', type=bool, default=False)

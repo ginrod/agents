@@ -145,10 +145,19 @@ def creates_horizontal_barrier(env, pos):
     
     return True
 
-def creates_a_barrier(env, pos):
+def creates_a_barrier(env, pos, robot_pos):
     # Check if puting a child in pos (sx, sy) creates a barrier of obstacles (vertical or horizontal)
     # considering a playpen with a child an obstacle for a robot carring another child
-    return creates_vertical_barrier(env, pos) or creates_horizontal_barrier(env, pos)
+    # creates_full_barrier = creates_vertical_barrier(env, pos) or creates_horizontal_barrier(env, pos)
+
+    walk_obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
+    pi, _ = find_paths(env, robot_pos, obstacles=walk_obstacles)
+    playpen_cells = get_element_pos(env, Playpen)
+
+    # any_isolated_playpen_cell = any(map(lambda playpen_pos: playpen_pos not in pi, playpen_cells))
+
+    # return creates_full_barrier or any_isolated_playpen_cell
+    return creates_full_barrier
 
 def children_in_grid(env, grid_left_corner):
     sx, sy = grid_left_corner
@@ -286,3 +295,28 @@ def get_3x3_grids(env):
                 result.append((x, y))
     
     return result
+
+def get_playpen_cells_reachables_only_by_other_playpen_cells(env):
+    playpen_cells = get_element_pos(env, Playpen)
+    available_neighbours = set()
+
+    for px, py in playpen_cells:
+        for dx, dy in directions:
+            nx, ny = px + dx, py + dy
+            if not inside(env, nx, ny): continue
+            if isinstance(env[nx][ny][1], (Agent, Void, Dirt)):
+                available_neighbours.add((nx, ny))
+    
+    result = set()
+    obstacles = ((Void, Obstacle, Void), (Void, Playpen, Void), (Void, Playpen, Child), (Agent, Playpen, Child), (Agent, Playpen, Void))
+    for n_pos in available_neighbours:
+        pi, _ = find_paths(env, n_pos, obstacles)
+        for p_pos in playpen_cells:
+            if p_pos not in pi:
+                result.add(p_pos)
+    
+    return result
+
+# The most across to an un reachable (without passing by others playpen cells) corner
+def get_most_splitting(env, reachables_only_by_playpen):
+    corner_dirs = [Direction.north_west(), Direction.north_east(), Direction.south_west(), Direction.south_east()]
