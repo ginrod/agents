@@ -265,7 +265,8 @@ class MySmartAgent(Agent):
 
     def trigger_clear_block_objective(self, env_info):
         active_objective = self.get_active_objective()
-        active_objective.is_in_course = False
+        if active_objective:
+            active_objective.is_in_course = False
         active_objective = self.objectives['clear-block']
         active_objective.is_in_course = True
         self.perform_action(env_info)
@@ -339,18 +340,19 @@ class ProactiveAgent(MySmartAgent):
         dirty_cells = env_info['dirty-cells']
         void_cells = env_info['void-cells']
         children = env_info['children']
+        
+        active_objective = self.get_active_objective()
 
-        if self.ignored_objectives >= self.ignored_objectives_limit:
+        if self.ignored_objectives >= self.ignored_objectives_limit and (not active_objective or not active_objective.on_dirty_cell):
             self.ignored_objectives = 0
             self.change_behaviour = True
 
-        if self.check_dirty_alert(void_cells, dirty_cells):
+        if active_objective.name != 'clear-block' and self.check_dirty_alert(void_cells, dirty_cells):
             for objective in self.objectives.values():
                 objective.is_in_course = False
             
             self.objectives['dirty-alert'].is_in_course = True
 
-        active_objective = self.get_active_objective()
         
         robot_pos, env = (self.x, self.y), self.env
         obstacles = ((Void, Obstacle, Void),)
@@ -400,17 +402,17 @@ class ReactiveAgent(MySmartAgent):
         void_cells = env_info['void-cells']
         children = env_info['children']
 
-        if self.interrupted_objectives >= self.interrupted_objectives_limit:
+        active_objective = self.get_active_objective()
+
+        if self.interrupted_objectives >= self.interrupted_objectives_limit and (not active_objective or not active_objective.on_dirty_cell):
             self.interrupted_objectives_limit = 0
             self.change_behaviour = True
 
-        if self.check_dirty_alert(void_cells, dirty_cells):
+        if active_objective.name != 'clear-block' and self.check_dirty_alert(void_cells, dirty_cells):
             for objective in self.objectives.values():
                 objective.is_in_course = False
             
             self.objectives['dirty-alert'].is_in_course = True
-
-        active_objective = self.get_active_objective()
         
         robot_pos, env = (self.x, self.y), self.env
         obstacles = ((Void, Obstacle, Void),)
