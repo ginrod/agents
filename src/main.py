@@ -1,7 +1,7 @@
 from agents import *
 from environment import *
 import random, math
-
+ 
 def pretty_print_env(env):
     rows, cols = len(env), len(env[0])
     result = ''
@@ -43,7 +43,7 @@ def create_initial_environment():
     for x in range(rows):
         for y in range(cols):
             if env[x][y] == None:
-                env[x][y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+                env[x][y] = (Void(x, y), Void(x, y), Void(x, y))
 
 
     # Generate play pen cells
@@ -52,7 +52,7 @@ def create_initial_environment():
     # Generating play pen cells
     free_cells = [(x, y) for y in range(cols) for x in range(rows)]
     for x, y in playpen_cells:
-        env[x][y] = (Void(x, y, env), Playpen(x, y, env), Void(x, y, env))
+        env[x][y] = (Void(x, y), Playpen(x, y), Void(x, y))
         free_cells.remove((x, y))
     
     # Generating robot
@@ -65,7 +65,7 @@ def create_initial_environment():
     for _ in range(obstacles_count):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
-        env[x][y] = (Void(x, y, env), Obstacle(x, y, env), Void(x, y, env))
+        env[x][y] = (Void(x, y), Obstacle(x, y), Void(x, y))
         free_cells.remove((x, y))
 
     walk_obstacles = ((Void, Obstacle, Void),)
@@ -77,104 +77,153 @@ def create_initial_environment():
         if (x, y) not in pi:
             shortest_path_without_obstacles = build_path((robotX, robotY), (x, y), pi_no_obstacles)
             for x, y in shortest_path_without_obstacles[1:len(shortest_path_without_obstacles)-1]:
-                env[x][y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+                env[x][y] = (Void(x, y), Void(x, y), Void(x, y))
+                if (x, y) not in free_cells:
+                    free_cells.append((x,y))
+
+    # If obstacles and playpen let to few achivable cells try again
+    if len(free_cells) < children_count + dirt_count:
+        return create_initial_environment()
 
     # Generating dirt
     for _ in range(dirt_count):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
-        env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+        env[x][y] = (Void(x, y), Dirt(x, y), Void(x, y))
         free_cells.remove((x, y))
 
     # Generating children
     for child_num in range(children_count):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
-        child = Child(x, y, env)
+        child = Child(x, y)
         child.num = child_num
-        env[x][y] = (Void(x, y, env), child, Void(x, y, env))
+        env[x][y] = (Void(x, y), child, Void(x, y))
         free_cells.remove((x, y))
 
     return env, (robotX, robotY)
 
-def run_simulation(env, file, t=50, print_to_file=False):
-    register_msg(f'\n\n#Turno 0', file, print_to_file, print_to_console=False)
-    register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+def run_simulation(env, file, t=50, print_all=False, sim_stats={}, sim_num=None, env_num=None, robot_num=None):
+    register_msg(f'\n\n#Turno 0', file, print_all, print_to_console=False)
+    register_msg(f'{pretty_print_env(env)}\n\n', file, print_all, print_to_console=False)
     rows, cols = len(env), len(env[0])
 
     t0 = 1
     dirty_cells, void_cells = count_dirty_cells(env), count_void_cells(env)
     children, robot = get_children(env), get_robot(env)
+    in_play_pen = children_in_play_pen(env)
+    env_info = { 'dirty-cells': dirty_cells, 'void-cells': void_cells, 'children': children, 'in-play-pen': in_play_pen }
 
     while t0 <= 100 * t:
         if dirty_cells >= 0.6 * (void_cells + dirty_cells):
             break
 
-        if children_in_play_pen(env) == len(children) and dirty_cells == 0:
+        if in_play_pen == len(children) and dirty_cells == 0:
             break
 
-        register_msg(f'#Turno {t0}', file, print_to_file, print_to_console=False)
+        register_msg(f'#Turno {t0}', file, print_all, print_to_console=False)
         
         # Performe a robot turn
-        robot.performe_action((dirty_cells, void_cells, children))
+        robot.perform_action(env, env_info)
 
         # Performe an environment change
-        all_grids = set()
-        for child in children:
-            for curr_grids in child.get_3x3_grids_containing_child():
-                all_grids |= curr_grids
+        all_grids = get_3x3_grids(env)
+        children_in_grid_dic = { grid : children_in_grid(env, grid) for grid in all_grids}
 
         for child in children:
-            child.react()
+            if child == robot.carried_child:
+                continue
+            
+            x, y = child.x, child.y
+            if isinstance(env[x][y][1], Playpen):
+                continue
+
+            child.react(env)
         
         for grid_left_corner in all_grids:
-            dirt_grid(env, grid_left_corner)
+            dirt_grid(env, grid_left_corner, children_in_grid_dic)
 
         # Performe a random environment change
         if t0 % t == 0:
-            register_msg(f'#Turno {t0} de variación aleatoria', file, print_to_file, print_to_console=False)
+            register_msg(' (de variación aleatoria)', file, print_all, print_to_console=False)
             random_change(env, robot, children)
 
-        register_msg(f'{pretty_print_env(env)}\n\n', file, print_to_file, print_to_console=False)
+        register_msg(f'{pretty_print_env(env)}\n\n', file, print_all, print_to_console=False)
 
-        dirty_cells = count_dirty_cells(env)
+        dirty_cells, void_cells, in_play_pen = count_dirty_cells(env), count_void_cells(env), children_in_play_pen(env)
+        env_info['dirty-cells'], env_info['void-cells'], env_info['in-play-pen'] = dirty_cells, void_cells, in_play_pen
+
         t0 += 1
     
+    robot_type = isinstance(robot, ProactiveAgent) and 'ProactiveAgent' or 'ReactiveAgent'
+
     if t0 == 100 * t + 1:
-        register_msg(f'\nLa simulación terminó porque se alcanzó el tiempo {100 * t}\n\n', file, print_to_file=True)
+        register_msg(f'\nLa simulación terminó porque se alcanzó el tiempo {100 * t}\n\n', file, print_all, print_all)
+        sim_stats[robot_type]['time'] += 1
     elif dirty_cells >= 0.6 * (void_cells + dirty_cells):
-        register_msg(f'\nLa simulación terminó porque la casa estaba sucia. El robot fue despedido\n\n', file, print_to_file=True)
+        register_msg(f'\nLa simulación terminó porque la casa estaba sucia. El robot fue despedido\n\n', file, print_all, print_all)
+        sim_stats[robot_type]['fired'] += 1
     else:
-        register_msg(f'\nLa simulación terminó porque el robot logró poner a los niños en el corral y limpiar la casa\n\n', file, print_to_file=True)
+        register_msg(f'\nLa simulación terminó porque el robot logró poner a los niños en el corral y limpiar la casa\n\n', file, print_all, print_all)
+        sim_stats[robot_type]['finish'] += 1
+
+def clone_env(env):
+    rows, cols = len(env), len(env[0])
+    cloned_env = [[None for _ in range(cols)] for _ in range(rows)]
+
+    for x in range(rows):
+        for y in range(cols):
+            o1, o2, o3 = env[x][y]
+            cloned_env[x][y] = o1.clone(), o2.clone(), o3.clone()
+    
+    return cloned_env
 
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('-t', '--time', type=int, default=50)
-    # parser.add_argument('-i', '--iter', type=int, default=30)
-    parser.add_argument('-i', '--iter', type=int, default=1)
-    # parser.add_argument('-p', '--print-to-file', type=bool, default=False)
-    parser.add_argument('-p', '--print-to-file', type=bool, default=True)
+    parser.add_argument('-t', '--time', type=int, default=0)
+    parser.add_argument('-i', '--iter', type=int, default=30)
+    parser.add_argument('-p', '--print_all', type=bool, default=False)
+    parser.add_argument('-s', '--seed', type=str, default="seed")
 
     args = parser.parse_args()
-    t, iterations, print_to_file = args.time, args.iter, args.print_to_file
+    t, iterations, print_all, seed = args.time, args.iter, args.print_all, args.seed
 
     with open('sim_logs.txt', 'w', encoding='utf-8'): pass
     file = open('sim_logs.txt', 'a', encoding='utf-8')
     
     agents = [ProactiveAgent, ReactiveAgent]
+    
+    sim_stats = {}
+    # random.seed(seed)
+    times = t and [t] or [5, 10, 15, 20, 30, 40, 50]
+
     sim_num = 1
     environments = [create_initial_environment() for _ in range(10)]
-    for r_num, agent in enumerate(agents):
-        for e_num, env_info in enumerate(environments):
-            env, (rx, ry) = env_info # env and robot position
-            env[rx][ry] = (Void(rx, ry, env), agent(rx, ry, env), Void(rx, ry, env))
-            for _ in range(iterations):
-                register_msg(f"#Simulacion {sim_num}\n", file, print_to_file=True)
-                register_msg(f"#Robot de tipo {r_num}\n", file, print_to_file=True)
-                register_msg(f"#Ambiente {e_num + 1}", file, print_to_file=True)
-                run_simulation(env, file, t, print_to_file)
-                sim_num += 1
+
+    for t in times:
+        for agent in ['ProactiveAgent', 'ReactiveAgent']:
+            sim_stats[agent] = { 'fired': 0, 'finish': 0, 'time': 0 }
+        register_msg(f"Para el tiempo t={t}\n", file, print_to_file=True, print_to_console=True)
+        for r_num, agent in enumerate(agents):
+            for e_num, env_info in enumerate(environments):
+                    env, (rx, ry) = env_info # env and robot position
+                    env = clone_env(env) # use a clone of the env to keep the initial one
+
+                    env[rx][ry] = (Void(rx, ry), agent(rx, ry), Void(rx, ry))
+
+                    for _ in range(iterations):
+                        register_msg(f"#Simulacion {sim_num}\n", file, print_all, print_all)
+                        register_msg(f"#Robot de tipo {r_num}\n", file, print_all, print_all)
+                        register_msg(f"#Ambiente {e_num + 1}", file, print_all, print_all)
+                        run_simulation(env, file, t, print_all, sim_stats, sim_num, e_num + 1, r_num)
+                        sim_num += 1
+            
+        for agent, stats in sim_stats.items():
+            register_msg(f'{agent}\n', file, print_to_file=True, print_to_console=True)
+            register_msg(f'Fue despedido: {stats["fired"]} veces\n', file, print_to_file=True, print_to_console=True)
+            register_msg(f'Completó la tarea: {stats["finish"]} veces\n', file, print_to_file=True, print_to_console=True)
+            register_msg(f'Se detuvo por tiempo: {stats["time"]} veces\n\n', file, print_to_file=True, print_to_console=True)
     
     file.close()

@@ -43,64 +43,96 @@ def inside(env, x, y):
 
 class EnvironmentElement:
 
-    def __init__(self, x, y, env):
+    def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.env = env
-    
-    def _move(self, new_pos):
+
+    def clone(self):
+        return EnvironmentElement(self.x, self.y)
+
+    def _move(self, new_pos, env):
         nx, ny = new_pos
         # Move to new_pos position
-        x, y, env = self.x, self.y, self.env
-        self.env[self.x][self.y] = (Void(x, y, env), Void(x, y, env), Void(x, y, env))
+        x, y = self.x, self.y
         self.x, self.y = nx, ny
 
-        if isinstance(env[nx][ny][1], Void):
-            self.env[nx][ny] = (Void(nx, ny, env), self, Void(nx, ny, env))
+        o1, o2, o3 = env[x][y]
+        if o1 == self:
+            env[x][y] = Void(x, y), o2, o3
+        elif o2 == self:
+            env[x][y] = Void(x, y), o1, o3
         else:
-            self.env[nx][ny] = (self, env[nx][ny][1], env[nx][ny][2])
+            env[x][y] = o1, o2, Void(x, y)
+
+        if isinstance(env[nx][ny][1], Void):
+            env[nx][ny] = Void(nx, ny), self, Void(nx, ny)
+        else:
+            env[nx][ny] = self, env[nx][ny][1], env[nx][ny][2]
 
     def __repr__(self):
         return str(self)
 
+class Agent(EnvironmentElement):
+    def __str__(self):
+        return ' R '
+
 class Void(EnvironmentElement):
     def __str__(self):
         return '   '
+    
+    def clone(self):
+        return Void(self.x, self.y)
 
 class Obstacle(EnvironmentElement):
     def __str__(self):
         return ' O '
+    
+    def clone(self):
+        return Obstacle(self.x, self.y)
 
-    def push(self, direction):
+    def push(self, direction, env):
         dx, dy = direction
         nx, ny = self.x + dx, self.y + dy
 
-        if not inside(self.env, nx, ny): return
+        if not inside(env, nx, ny): return
         
-        if isinstance(self.env[nx][ny][1], Void):
-            self._move((nx, ny))
-        elif isinstance(self.env[nx][ny][1], Obstacle):
+        if isinstance(env[nx][ny][1], Void):
+            self._move((nx, ny), env)
+        elif isinstance(env[nx][ny][1], Obstacle):
             # Try pushing the obstacle
-            self.env[nx][ny][1].push((dx, dy))
+            env[nx][ny][1].push((dx, dy), env)
 
             # If new pos is now Void the push could be performed
-            if isinstance(self.env[nx][ny][1], Void):
-                self._move((nx, ny))
+            if isinstance(env[nx][ny][1], Void):
+                self._move((nx, ny), env)
 
 class Dirt(EnvironmentElement):
     def __str__(self):
         return ' D '
+    
+    def clone(self):
+        return Dirt(self.x, self.y)
 
 class Playpen(EnvironmentElement):
     def __str__(self):
         return ' P '
+    
+    def clone(self):
+        return Playpen(self.x, self.y)
 
 class Child(EnvironmentElement):
+    def __init__(self, x, y, num=None):
+        super(Child, self).__init__(x, y)
+        self.num = num
+    
+    def clone(self):
+        return Child(self.x, self.y, self.num)
+
     def __str__(self):
         return self.num < 10 and f'C0{self.num}' or f'C{self.num}'
 
-    def react(self):
-        inside_directions = [(dx,dy) for dx,dy in directions if inside(self.env, self.x + dx, self.y + dy)]
+    def react(self, env):
+        inside_directions = [(dx,dy) for dx,dy in directions if inside(env, self.x + dx, self.y + dy)]
         idx = random.randint(0, len(inside_directions))
         # Simulating a do nothing with the same probability of move randomly inside env
         if idx == len(inside_directions): return
@@ -108,18 +140,18 @@ class Child(EnvironmentElement):
         dx, dy = inside_directions[idx]
         nx, ny = self.x + dx, self.y + dy
 
-        if isinstance(self.env[nx][ny][1], Void):
-            self._move((nx, ny))
-        elif isinstance(self.env[nx][ny][1], Obstacle):
+        if isinstance(env[nx][ny][1], Void):
+            self._move((nx, ny), env)
+        elif isinstance(env[nx][ny][1], Obstacle):
             # Try pushing the obstacle
-            self.env[nx][ny][1].push((dx, dy))
+            env[nx][ny][1].push((dx, dy), env)
             
             # If new pos is now Void the push could be performed
-            if isinstance(self.env[nx][ny][1], Void):
-                self._move((nx, ny))
+            if isinstance(env[nx][ny][1], Void):
+                self._move((nx, ny), env)
     
-    def get_3x3_grids_containing_child(self):
-        x, y, env = self.x, self.y, self.env
+    def get_3x3_grids_containing_child(self, env):
+        x, y = self.x, self.y
         result = set() # left corner of the 3x3 grid
 
         # If child is carried by the robot or in the playpen return no grids 

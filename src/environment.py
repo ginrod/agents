@@ -3,8 +3,6 @@ from entities import *
 import random
 
 def build_path(start, end, pi):
-    if not end in pi: return []
-
     path, curr = [], end
     while curr != start:
         path.append(curr)
@@ -43,19 +41,19 @@ def find_playpen_cells(env, length):
     play_pen_cells = build_path(start_pos, end_pos, pi)
 
     return play_pen_cells
-    
-def find_paths(env, s, obstacles):
-    def match_obstacles(curr_cell):
-        if not obstacles: 
-            return False
 
-        c1, c2, c3 = curr_cell
-        for t1, t2, t3 in obstacles:
-            if isinstance(c1, t1) and isinstance(c2, t2) and isinstance(c3, t3):
-                return True
-        
+def match_types(curr_cell, types):
+    if not types: 
         return False
 
+    c1, c2, c3 = curr_cell
+    for t1, t2, t3 in types:
+        if isinstance(c1, t1) and isinstance(c2, t2) and isinstance(c3, t3):
+            return True
+    
+    return False
+
+def find_paths(env, s, obstacles):
     rows, cols = len(env), len(env[0])
     visited = [[0 for _ in range(cols)] for _ in range(rows)]
     q, pi = [s], {}
@@ -66,7 +64,7 @@ def find_paths(env, s, obstacles):
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             next_pos = (nx, ny)
-            if inside(env, nx, ny) and next_pos != s and visited[nx][ny] == 0 and not match_obstacles(env[nx][ny]):
+            if inside(env, nx, ny) and next_pos != s and visited[nx][ny] == 0 and not match_types(env[nx][ny], obstacles):
                 q.insert(0, next_pos)
                 pi[next_pos] = (x, y)
                 visited[nx][ny] = visited[x][y] + 1
@@ -95,7 +93,7 @@ def children_in_play_pen(env):
     count = 0
     for line in env:
         for _, play_pen_pos, child_pos in line:
-            if isinstance(child_pos, Child) and isinstance(play_pen_pos, PlayPen):
+            if isinstance(child_pos, Child) and isinstance(play_pen_pos, Playpen):
                 count += 1
     
     return count
@@ -108,10 +106,9 @@ def get_children(env):
                 children.append(child_in_pos1)
 
             if isinstance(child_in_pos2, Child):
-                children.append(child_in_pos1)
+                children.append(child_in_pos2)
     
     return children
-
 
 def get_robot(env):
     for line in env:
@@ -130,7 +127,7 @@ def creates_vertical_barrier(env, pos):
     # considering a playpen with a child an obstacle for a robot carring another child
     obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
     for y in range(cols):
-        if y != ys and not isinstance(env[sx][y], obstacles):
+        if y != sy and not match_types(env[sx][y], obstacles):
             return False
     
     return True
@@ -143,35 +140,46 @@ def creates_horizontal_barrier(env, pos):
     # considering a playpen with a child an obstacle for a robot carring another child
     obstacles = ((Void, Obstacle, Void), (Void, Playpen, Child))
     for x in range(rows):
-        if x != sx and not isinstance(env[x][sy], obstacles):
+        if x != sx and not match_types(env[x][sy], obstacles):
             return False
     
     return True
 
-def creates_a_barrier(env, pos):
+def creates_a_barrier(env, pos, robot_pos):
     # Check if puting a child in pos (sx, sy) creates a barrier of obstacles (vertical or horizontal)
     # considering a playpen with a child an obstacle for a robot carring another child
-    return creates_vertical_barrier(env, pos) or creates_horizontal_barrier(env, pos)
+    creates_full_barrier = creates_vertical_barrier(env, pos) or creates_horizontal_barrier(env, pos)
+    return creates_full_barrier
 
-def dirt_grid(env, grid_left_corner):
+def children_in_grid(env, grid_left_corner):
     sx, sy = grid_left_corner
 
-    free_cells, children = [], 0
+    children = 0
+    for x in range(sx, sx + 3):
+        for y in range(sy, sy + 3):
+            if match_types(env[x][y], ((Void, Child, Void),)):
+                children += 1
+    
+    return children
+
+def dirt_grid(env, grid_left_corner, children_in_grid_dic):
+    sx, sy = grid_left_corner
+    children = (sx, sy) in children_in_grid_dic and children_in_grid_dic[sx, sy] or 0 
+    
+    free_cells = []
     for x in range(sx, sx + 3):
         for y in range(sy, sy + 3):
             if isinstance(env[x][y][1], Void):
                 free_cells.append((x, y))
-            elif isinstance(env[x][y], ((Void, Child, Void),)):
-                children += 1
     
-    max_per_children = children == 1 and 1 or children == 2 and 3 or children >= 3 and 6 or 0
-    random_count = random.randint(0, max_per_children)
+    max_dirt_by_children_count = children == 1 and 1 or children == 2 and 3 or children >= 3 and 6 or 0
+    random_count = random.randint(0, max_dirt_by_children_count)
     dirt_count = min(random_count, len(free_cells))
 
     for _ in range(dirt_count):
         idx = random.randint(0, len(free_cells) - 1)
         x, y = free_cells[idx]
-        env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+        env[x][y] = (Void(x, y), Dirt(x, y), Void(x, y))
 
 def get_element_pos(env, element):
     elements_positions = []
@@ -184,24 +192,27 @@ def get_element_pos(env, element):
 
 def clear_positions(env, positions):
     for x, y in positions:
-        env[x][y] = Void(x, y, env), Void(x, y, env), Void(x, y, env)
+        env[x][y] = Void(x, y), Void(x, y), Void(x, y)
 
 def random_change(env, robot, children):
     # Clear obstacles
     obstacles_positions = get_element_pos(env, Obstacle)
-    clear_positions(obstacles_positions)
+    clear_positions(env, obstacles_positions)
     
     # Clear positions of alone childs
     children_to_be_relocated = []
     for child in children:
         x, y = child.x, child.y
-        if isinstance(env[x][y], ((Void, Child, Void),)):
-            env[x][y] = Void(x, y, env), Void(x, y, env), Void(x, y, env)
+        if match_types(env[x][y], ((Void, Child, Void),)):
+            env[x][y] = Void(x, y), Void(x, y), Void(x, y)
             children_to_be_relocated.append(child)
     
     # Clear dirts
     dirts_positions = get_element_pos(env, Dirt)
-    clear_positions(dirts_positions)
+    if (robot.x, robot.y) in dirts_positions:
+        dirts_positions.remove((robot.x, robot.y))
+
+    clear_positions(env, dirts_positions)
 
     free_cells_positions = get_element_pos(env, Void)
     playpen_cells = get_element_pos(env, Playpen)
@@ -213,7 +224,7 @@ def random_change(env, robot, children):
         for _ in range(len(obstacles_positions)):
             idx = random.randint(0, len(free_cells) - 1)
             x, y = free_cells[idx]
-            env[x][y] = (Void(x, y, env), Obstacle(x, y, env), Void(x, y, env))
+            env[x][y] = (Void(x, y), Obstacle(x, y), Void(x, y))
             free_cells.remove((x, y))
 
         walk_obstacles = ((Void, Obstacle, Void),)
@@ -232,18 +243,18 @@ def random_change(env, robot, children):
                 continue
         
         # Relocating children
-        for child in range(children_to_be_relocated):
+        for child in children_to_be_relocated:
             idx = random.randint(0, len(free_cells) - 1)
             x, y = free_cells[idx]
             child.x, child.y = x, y
-            env[x][y] = (Void(x, y, env), child, Void(x, y, env))
+            env[x][y] = (Void(x, y), child, Void(x, y))
             free_cells.remove((x, y))
         
         # Relocating dirts
         for _ in range(len(dirts_positions)):
             idx = random.randint(0, len(free_cells) - 1)
             x, y = free_cells[idx]
-            env[x][y] = (Void(x, y, env), Dirt(x, y, env), Void(x, y, env))
+            env[x][y] = (Void(x, y), Dirt(x, y), Void(x, y))
             free_cells.remove((x, y))
         
         break
@@ -252,17 +263,52 @@ def random_change(env, robot, children):
     # so the objects will be return to the original positions
     if retries > 100:
         for x, y in obstacles_positions:
-            env[x][y] = Void(x, y, env), Obstacle(x, y, env), Void(x, y, env)
+            env[x][y] = Void(x, y), Obstacle(x, y), Void(x, y)
         
         for child in children_to_be_relocated:
             x, y = child.x, child.y
-            env[x][y] = Void(x, y, env), child, Void(x, y, env)
+            env[x][y] = Void(x, y), child, Void(x, y)
         
         for x, y in dirts_positions:
-            env[x][y] = Void(x, y, env), Dirt(x, y, env), Void(x, y, env)
+            env[x][y] = Void(x, y), Dirt(x, y), Void(x, y)
 
 def deterimine_direction(pos1, pos2):
     x1, y1 = pos1
     x2, y2 = pos2
     
     return x2 - x1, y2 - y1
+
+def get_3x3_grids(env):
+    rows, cols = len(env), len(env[0])
+    result = []
+    for x in range(0, rows, 3):
+        for y in range(0, cols, 3):
+            if inside(env, x + 2, y + 2):
+                result.append((x, y))
+    
+    return result
+
+def get_playpen_cells_reachables_only_by_other_playpen_cells(env):
+    playpen_cells = get_element_pos(env, Playpen)
+    available_neighbours = set()
+
+    for px, py in playpen_cells:
+        for dx, dy in directions:
+            nx, ny = px + dx, py + dy
+            if not inside(env, nx, ny): continue
+            if isinstance(env[nx][ny][1], (Agent, Void, Dirt)):
+                available_neighbours.add((nx, ny))
+    
+    result = set()
+    obstacles = ((Void, Obstacle, Void), (Void, Playpen, Void), (Void, Playpen, Child), (Agent, Playpen, Child), (Agent, Playpen, Void))
+    for n_pos in available_neighbours:
+        pi, _ = find_paths(env, n_pos, obstacles)
+        for p_pos in playpen_cells:
+            if p_pos not in pi:
+                result.add(p_pos)
+    
+    return result
+
+# The most across to an un reachable (without passing by others playpen cells) corner
+def get_most_splitting(env, reachables_only_by_playpen):
+    corner_dirs = [Direction.north_west(), Direction.north_east(), Direction.south_west(), Direction.south_east()]
