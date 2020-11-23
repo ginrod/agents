@@ -56,7 +56,6 @@ class EnvironmentElement:
         x, y = self.x, self.y
         self.x, self.y = nx, ny
 
-        # env[x][y] = Void(x, y), Void(x, y), Void(x, y)
         o1, o2, o3 = env[x][y]
         if o1 == self:
             env[x][y] = Void(x, y), o2, o3
@@ -94,11 +93,6 @@ class Obstacle(EnvironmentElement):
     def push(self, direction, env):
         dx, dy = direction
         nx, ny = self.x + dx, self.y + dy
-
-        for x in range(len(env)):
-            for y in range(len(env[0])):
-                if env[x][y][1] == self:
-                    foo = 0
 
         if not inside(env, nx, ny): return
         

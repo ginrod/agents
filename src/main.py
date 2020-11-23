@@ -104,9 +104,6 @@ def create_initial_environment():
     return env, (robotX, robotY)
 
 def run_simulation(env, file, t=50, print_all=False, sim_stats={}, sim_num=None, env_num=None, robot_num=None):
-    if sim_num == 2 and env_num == 2 and robot_num == 0:
-        foo = 0
-
     register_msg(f'\n\n#Turno 0', file, print_all, print_to_console=False)
     register_msg(f'{pretty_print_env(env)}\n\n', file, print_all, print_to_console=False)
     rows, cols = len(env), len(env[0])
@@ -118,9 +115,6 @@ def run_simulation(env, file, t=50, print_all=False, sim_stats={}, sim_num=None,
     env_info = { 'dirty-cells': dirty_cells, 'void-cells': void_cells, 'children': children, 'in-play-pen': in_play_pen }
 
     while t0 <= 100 * t:
-        if sim_num == 4 and t0 == 8:
-            foo = 0
-
         if dirty_cells >= 0.6 * (void_cells + dirty_cells):
             break
 
@@ -137,9 +131,6 @@ def run_simulation(env, file, t=50, print_all=False, sim_stats={}, sim_num=None,
         children_in_grid_dic = { grid : children_in_grid(env, grid) for grid in all_grids}
 
         for child in children:
-            if child.num == 4:
-                foo = 0
-
             if child == robot.carried_child:
                 continue
             
@@ -194,47 +185,41 @@ if __name__ == '__main__':
     parser.add_argument('-t', '--time', type=int, default=0)
     parser.add_argument('-i', '--iter', type=int, default=30)
     parser.add_argument('-p', '--print_all', type=bool, default=False)
+    parser.add_argument('-s', '--seed', type=str, default="seed")
 
     args = parser.parse_args()
-    t, iterations, print_all = args.time, args.iter, args.print_all
+    t, iterations, print_all, seed = args.time, args.iter, args.print_all, args.seed
 
     with open('sim_logs.txt', 'w', encoding='utf-8'): pass
     file = open('sim_logs.txt', 'a', encoding='utf-8')
     
     agents = [ProactiveAgent, ReactiveAgent]
-    # agents = [ReactiveAgent, ProactiveAgent]
-
-    sim_stats = {}
-    for agent in ['ProactiveAgent', 'ReactiveAgent']:
-        sim_stats[agent] = { 'fired': 0, 'finish': 0, 'time': 0 }
     
-    random.seed("seed")
+    sim_stats = {}
+    # random.seed(seed)
     times = t and [t] or [5, 10, 15, 20, 30, 40, 50]
 
     sim_num = 1
     environments = [create_initial_environment() for _ in range(10)]
 
     for t in times:
+        for agent in ['ProactiveAgent', 'ReactiveAgent']:
+            sim_stats[agent] = { 'fired': 0, 'finish': 0, 'time': 0 }
         register_msg(f"Para el tiempo t={t}\n", file, print_to_file=True, print_to_console=True)
         for r_num, agent in enumerate(agents):
             for e_num, env_info in enumerate(environments):
-                if sim_num == 12 and e_num + 1 == 2 and r_num == 1:
-                    foo = 0
                     env, (rx, ry) = env_info # env and robot position
-                    o1, o2 = env[7][2], env[7][3]
+                    env = clone_env(env) # use a clone of the env to keep the initial one
 
-                env, (rx, ry) = env_info # env and robot position
-                env = clone_env(env) # use a clone of the env to keep the initial one
+                    env[rx][ry] = (Void(rx, ry), agent(rx, ry), Void(rx, ry))
 
-                env[rx][ry] = (Void(rx, ry), agent(rx, ry), Void(rx, ry))
-
-                for _ in range(iterations):
-                    register_msg(f"#Simulacion {sim_num}\n", file, print_all, print_all)
-                    register_msg(f"#Robot de tipo {r_num}\n", file, print_all, print_all)
-                    register_msg(f"#Ambiente {e_num + 1}", file, print_all, print_all)
-                    run_simulation(env, file, t, print_all, sim_stats, sim_num, e_num + 1, r_num)
-                    sim_num += 1
-        
+                    for _ in range(iterations):
+                        register_msg(f"#Simulacion {sim_num}\n", file, print_all, print_all)
+                        register_msg(f"#Robot de tipo {r_num}\n", file, print_all, print_all)
+                        register_msg(f"#Ambiente {e_num + 1}", file, print_all, print_all)
+                        run_simulation(env, file, t, print_all, sim_stats, sim_num, e_num + 1, r_num)
+                        sim_num += 1
+            
         for agent, stats in sim_stats.items():
             register_msg(f'{agent}\n', file, print_to_file=True, print_to_console=True)
             register_msg(f'Fue despedido: {stats["fired"]} veces\n', file, print_to_file=True, print_to_console=True)
