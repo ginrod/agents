@@ -106,7 +106,7 @@ def get_children(env):
                 children.append(child_in_pos1)
 
             if isinstance(child_in_pos2, Child):
-                children.append(child_in_pos1)
+                children.append(child_in_pos2)
     
     return children
 
