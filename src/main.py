@@ -196,7 +196,7 @@ if __name__ == '__main__':
     agents = [ProactiveAgent, ReactiveAgent]
     
     sim_stats = {}
-    # random.seed(seed)
+    random.seed(seed)
     times = t and [t] or [5, 10, 15, 20, 30, 40, 50]
 
     sim_num = 1
